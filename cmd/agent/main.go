@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
+	"os"
 	"runtime"
 	"strconv"
 	"time"
@@ -15,9 +17,26 @@ func sendRequest(mA *[29][3]string, ip string, port int, cl *http.Client) {
 	for row := 0; row < len(mA); row++ {
 		if mA[row][0] != "" {
 			curUrl = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", ip, strconv.Itoa(port), mA[row][1], mA[row][0], mA[row][2])
-			fmt.Println(curUrl)
-			resp, err := cl.Get(curUrl)
-			fmt.Println("Response - %s; error - %s", resp, err)
+			fmt.Printf("URL is: %s ", curUrl)
+			//resp, err := cl.Get(curUrl)
+			request, err := http.NewRequest(http.MethodPost, curUrl, nil)
+			request.Header.Set("Content-Type", "text/plain")
+			if err != nil {
+				fmt.Printf("Error: %s", err)
+				os.Exit(1)
+			}
+			response, err := cl.Do(request)
+			if err != nil {
+				fmt.Printf("Error: %s", err)
+				os.Exit(1)
+			}
+			fmt.Printf("Response status code: %s", response.Status)
+			body, err := io.ReadAll(response.Body)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			fmt.Printf(string(body))
 		}
 	}
 }
