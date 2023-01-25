@@ -95,13 +95,14 @@ func main() {
 	mstorage.gauges = make(map[string]float64)
 	mstorage.counters = make(map[string]int64)
 
+	//Handler for gauges
 	hg := func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "Hello from a HandleFunc gauge\n")
 		//fmt.Printf("Req: %s", r.URL.Path)
 		urlPath := r.URL.Path
 		matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9]+$`, urlPath)
 		if (matched == true) && (err == nil) {
-			fmt.Println("Match")
+			//fmt.Println("Match")
 			pathSlice := strings.Split(urlPath, "/")
 			mName := string(pathSlice[3])
 			mValue, err := strconv.ParseFloat(pathSlice[4], 64)
@@ -114,9 +115,23 @@ func main() {
 		}
 
 	}
-
-	hc := func(w http.ResponseWriter, _ *http.Request) {
+	//Handler for counters
+	hc := func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "Hello from a HandleFunc counter\n")
+		urlPath := r.URL.Path
+		matched, err := regexp.MatchString(`\/update\/counter\/[A-Za-z]+\/[0-9]+$`, urlPath)
+		if (matched == true) && (err == nil) {
+			//fmt.Println("Match")
+			pathSlice := strings.Split(urlPath, "/")
+			mName := string(pathSlice[3])
+			mValue, err := strconv.ParseInt(pathSlice[4], 10, 64)
+			if contains(MetricNameArray, mName) && (err == nil) {
+				mstorage.PushCounter(mName, mValue)
+				fmt.Printf("Mstorage counter is: %s \n", mstorage.counters)
+			}
+		} else {
+			fmt.Printf("URL is : %s\n", r.URL.Path)
+		}
 	}
 
 	http.HandleFunc("/update/gauge/", hg)
