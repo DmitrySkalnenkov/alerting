@@ -13,30 +13,32 @@ import (
 
 func sendRequest(mA *[29][3]string, ip string, port int, cl *http.Client) {
 	//<-time.After(10 * time.Second)
-	curUrl := ""
+	curURL := ""
 	for row := 0; row < len(mA); row++ {
 		if mA[row][0] != "" {
-			curUrl = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", ip, strconv.Itoa(port), mA[row][1], mA[row][0], mA[row][2])
-			fmt.Printf("URL is: %s ", curUrl)
+			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", ip, strconv.Itoa(port), mA[row][1], mA[row][0], mA[row][2])
+			fmt.Printf("URL is: %s ", curURL)
 			//resp, err := cl.Get(curUrl)
-			request, err := http.NewRequest(http.MethodPost, curUrl, nil)
+			request, err := http.NewRequest(http.MethodPost, curURL, nil)
 			request.Header.Set("Content-Type", "text/plain")
 			if err != nil {
-				fmt.Printf("Error: %s", err)
+				fmt.Printf("Error: %s.\n", err)
 				os.Exit(1)
 			}
 			response, err := cl.Do(request)
+
 			if err != nil {
-				fmt.Printf("Error: %s", err)
+				fmt.Printf("Error: %s.\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("Response status code: %s", response.Status)
+			fmt.Printf("Response status code: %s.\n", response.Status)
 			body, err := io.ReadAll(response.Body)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			fmt.Printf(string(body))
+			fmt.Println(string(body))
+			defer response.Body.Close()
 		}
 	}
 }
@@ -170,12 +172,12 @@ func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) 
 
 func main() {
 	StartTime := time.Now()
-	fmt.Println("Start time: %s", string(StartTime.String()))
+	fmt.Printf("Start time: %s.\n", string(StartTime.String()))
 	CurTime := time.Now()
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
-	serverIpAddress := "127.0.0.1"
-	serverTcpPort := 8080
+	serverIPAddress := "127.0.0.1"
+	serverTCPPort := 8080
 	var PollCount int64
 	var rtm runtime.MemStats
 	var MetricArray [29][3]string
@@ -186,13 +188,13 @@ func main() {
 		time.Sleep(100 * time.Millisecond)
 		CurTime = time.Now()
 		if CurTime.Sub(LastPoolTime) > 2*time.Second {
-			fmt.Println("PoolTime: %s", string(LastPoolTime.String()))
+			fmt.Printf("PoolTime: %s.\n", string(LastPoolTime.String()))
 			getMetrics(&MetricArray, &PollCount, &rtm)
 			LastPoolTime = time.Now()
 		}
 		if CurTime.Sub(LastReportTime) > 10*time.Second {
-			fmt.Println("ReportTime: %s", string(LastReportTime.String()))
-			sendRequest(&MetricArray, serverIpAddress, serverTcpPort, client)
+			fmt.Printf("ReportTime: %s.\n", string(LastReportTime.String()))
+			sendRequest(&MetricArray, serverIPAddress, serverTCPPort, client)
 			LastReportTime = time.Now()
 		}
 	}

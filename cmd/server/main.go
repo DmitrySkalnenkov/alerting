@@ -20,11 +20,11 @@ func (m MemStorage) PushGauge(metricName string, value float64) {
 
 func (m MemStorage) PopGauge(metricName string) float64 {
 	value, ok := m.gauges[metricName]
-	if ok == true {
+	if ok {
 		value = m.gauges[metricName]
 		return value
 	} else {
-		fmt.Println("Gauge metric with name  %s is not found", metricName)
+		fmt.Printf("Gauge metric with name  %s is not found.\n", metricName)
 		return 0
 	}
 }
@@ -34,14 +34,14 @@ func (m MemStorage) PushCounter(metricName string, value int64) {
 	if ok {
 		m.counters[metricName] = m.counters[metricName] + value
 	} else {
-		fmt.Println("Counter metric with name  %s is not found", metricName)
+		fmt.Printf("Counter metric with name  %s is not found.\n", metricName)
 		m.counters[metricName] = value
 	}
 }
 
 func (m MemStorage) PopCounter(metricName string) int64 {
-	var value int64
-	value = m.counters[metricName]
+	//var value int64
+	value := m.counters[metricName]
 	return value
 }
 
@@ -102,14 +102,14 @@ func main() {
 		//fmt.Printf("Req: %s", r.URL.Path)
 		urlPath := r.URL.Path
 		matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9.]+$`, urlPath)
-		if (matched == true) && (err == nil) {
+		if matched && (err == nil) {
 			//fmt.Println("Match")
 			pathSlice := strings.Split(urlPath, "/")
 			mName := string(pathSlice[3])
 			mValue, err := strconv.ParseFloat(pathSlice[4], 64)
 			if contains(MetricNameArray, mName) && (err == nil) {
 				mstorage.PushGauge(mName, mValue)
-				fmt.Printf("Mstorage gauges is: %s \n", mstorage.gauges)
+				fmt.Printf("Mstorage gauges is: %f.\n", mstorage.gauges)
 			}
 		} else {
 			fmt.Printf("URL is : %s\n", r.URL.Path)
@@ -122,14 +122,14 @@ func main() {
 		io.WriteString(w, "Hello from a HandleFunc counter\n")
 		urlPath := r.URL.Path
 		matched, err := regexp.MatchString(`\/update\/counter\/[A-Za-z]+\/[0-9]+$`, urlPath)
-		if (matched == true) && (err == nil) {
+		if matched && (err == nil) {
 			//fmt.Println("Match")
 			pathSlice := strings.Split(urlPath, "/")
 			mName := string(pathSlice[3])
 			mValue, err := strconv.ParseInt(pathSlice[4], 10, 64)
 			if contains(MetricNameArray, mName) && (err == nil) {
 				mstorage.PushCounter(mName, mValue)
-				fmt.Printf("Mstorage counter is: %s \n", mstorage.counters)
+				fmt.Printf("Mstorage counter is: %d.\n", mstorage.counters)
 			}
 		} else {
 			fmt.Printf("URL is : %s\n", r.URL.Path)
