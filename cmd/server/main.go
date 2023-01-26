@@ -24,7 +24,7 @@ func (m MemStorage) PopGauge(metricName string) float64 {
 		value = m.gauges[metricName]
 		return value
 	} else {
-		fmt.Println("Metric with name  %s is not found", metricName)
+		fmt.Println("Gauge metric with name  %s is not found", metricName)
 		return 0
 	}
 }
@@ -34,6 +34,7 @@ func (m MemStorage) PushCounter(metricName string, value int64) {
 	if ok {
 		m.counters[metricName] = m.counters[metricName] + value
 	} else {
+		fmt.Println("Counter metric with name  %s is not found", metricName)
 		m.counters[metricName] = value
 	}
 }
@@ -100,7 +101,7 @@ func main() {
 		io.WriteString(w, "Hello from a HandleFunc gauge\n")
 		//fmt.Printf("Req: %s", r.URL.Path)
 		urlPath := r.URL.Path
-		matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9]+$`, urlPath)
+		matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9.]+$`, urlPath)
 		if (matched == true) && (err == nil) {
 			//fmt.Println("Match")
 			pathSlice := strings.Split(urlPath, "/")
@@ -112,6 +113,7 @@ func main() {
 			}
 		} else {
 			fmt.Printf("URL is : %s\n", r.URL.Path)
+			http.Error(w, err.Error(), 404)
 		}
 
 	}
@@ -131,6 +133,7 @@ func main() {
 			}
 		} else {
 			fmt.Printf("URL is : %s\n", r.URL.Path)
+			http.Error(w, err.Error(), 404)
 		}
 	}
 
