@@ -114,10 +114,12 @@ func main() {
 				mstorage.PushGauge(mName, mValue)
 				fmt.Printf("Mstorage gauges is: %v.\n", mstorage.gauges)
 			}
+		} else if urlPath == "/update/gauge/" {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			fmt.Printf("URL is : %s\n", r.URL.Path)
 		} else {
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			fmt.Printf("URL is : %s\n", r.URL.Path)
-			//http.Error(w, err.Error(), 404)
 		}
 		io.WriteString(w, "Hello from gauge handler. \n")
 
@@ -127,8 +129,6 @@ func main() {
 		urlPath := r.URL.Path
 		matched, err := regexp.MatchString(`\/update\/counter\/[A-Za-z]+\/[0-9]+$`, urlPath)
 		if matched && (err == nil) {
-			//fmt.Println("Match")
-			//w.WriteHeader(http.StatusOK)
 			pathSlice := strings.Split(urlPath, "/")
 			mName := string(pathSlice[3])
 			mValue, err := strconv.ParseInt(pathSlice[4], 10, 64)
@@ -136,10 +136,12 @@ func main() {
 				mstorage.PushCounter(mName, mValue)
 				fmt.Printf("Mstorage counter is: %v.\n", mstorage.counters)
 			}
+		} else if urlPath == "/update/counter/" {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			fmt.Printf("URL is : %s\n", r.URL.Path)
 		} else {
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			fmt.Printf("URL is : %s\n", r.URL.Path)
-			//http.Error(w, err.Error(), 404)
 		}
 		io.WriteString(w, "Hello from counter handler.\n")
 	}
