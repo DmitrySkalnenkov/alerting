@@ -19,10 +19,9 @@ func (m MemStorage) PushGauge(metricName string, value float64) {
 }
 
 func (m MemStorage) PopGauge(metricName string) float64 {
-	value, ok := m.gauges[metricName]
+	_, ok := m.gauges[metricName]
 	if ok {
-		value = m.gauges[metricName]
-		return value
+		return m.gauges[metricName]
 	} else {
 		fmt.Printf("Gauge metric with name  %s is not found.\n", metricName)
 		return 0
@@ -34,15 +33,19 @@ func (m MemStorage) PushCounter(metricName string, value int64) {
 	if ok {
 		m.counters[metricName] = m.counters[metricName] + value
 	} else {
-		fmt.Printf("Counter metric with name  %s is not found.\n", metricName)
+		//fmt.Printf("Counter metric with name  %s is not found.\n", metricName)
 		m.counters[metricName] = value
 	}
 }
 
 func (m MemStorage) PopCounter(metricName string) int64 {
-	//var value int64
-	value := m.counters[metricName]
-	return value
+	_, ok := m.counters[metricName]
+	if ok {
+		return m.counters[metricName]
+	} else {
+		fmt.Printf("Gauge metric with name  %s is not found.\n", metricName)
+		return 0
+	}
 }
 
 func contains(s []string, str string) bool {
@@ -109,7 +112,7 @@ func main() {
 			mValue, err := strconv.ParseFloat(pathSlice[4], 64)
 			if contains(MetricNameArray, mName) && (err == nil) {
 				mstorage.PushGauge(mName, mValue)
-				fmt.Printf("Mstorage gauges is: %f.\n", mstorage.gauges)
+				fmt.Printf("Mstorage gauges is: %v.\n", mstorage.gauges)
 			}
 		} else {
 			fmt.Printf("URL is : %s\n", r.URL.Path)
@@ -129,7 +132,7 @@ func main() {
 			mValue, err := strconv.ParseInt(pathSlice[4], 10, 64)
 			if contains(MetricNameArray, mName) && (err == nil) {
 				mstorage.PushCounter(mName, mValue)
-				fmt.Printf("Mstorage counter is: %d.\n", mstorage.counters)
+				fmt.Printf("Mstorage counter is: %v.\n", mstorage.counters)
 			}
 		} else {
 			fmt.Printf("URL is : %s\n", r.URL.Path)

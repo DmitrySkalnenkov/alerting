@@ -173,7 +173,8 @@ func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) 
 func main() {
 	StartTime := time.Now()
 	fmt.Printf("Start time: %s.\n", string(StartTime.String()))
-	CurTime := time.Now()
+	//CurTime := time.Now()
+	var CurTime time.Time
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
 	serverIPAddress := "127.0.0.1"
