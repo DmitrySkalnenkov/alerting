@@ -117,7 +117,7 @@ func main() {
 		} else {
 			fmt.Printf("URL is : %s\n", r.URL.Path)
 			//http.Error(w, err.Error(), 404)
-			http.Error(w, "Error. 404", 404)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		}
 
 	}
@@ -138,7 +138,7 @@ func main() {
 		} else {
 			fmt.Printf("URL is : %s\n", r.URL.Path)
 			//http.Error(w, err.Error(), 404)
-			http.Error(w, "Error. 404", 404)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		}
 	}
 
