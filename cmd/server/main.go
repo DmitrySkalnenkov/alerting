@@ -101,7 +101,6 @@ func main() {
 
 	//Handler for gauges
 	hg := func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "Hello from gauge handler. \n")
 		//fmt.Printf("Req: %s", r.URL.Path)
 		urlPath := r.URL.Path
 		matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9.]+$`, urlPath)
@@ -116,15 +115,15 @@ func main() {
 				fmt.Printf("Mstorage gauges is: %v.\n", mstorage.gauges)
 			}
 		} else {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			fmt.Printf("URL is : %s\n", r.URL.Path)
 			//http.Error(w, err.Error(), 404)
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		}
+		io.WriteString(w, "Hello from gauge handler. \n")
 
 	}
 	//Handler for counters
 	hc := func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "Hello from counter handler.\n")
 		urlPath := r.URL.Path
 		matched, err := regexp.MatchString(`\/update\/counter\/[A-Za-z]+\/[0-9]+$`, urlPath)
 		if matched && (err == nil) {
@@ -138,15 +137,17 @@ func main() {
 				fmt.Printf("Mstorage counter is: %v.\n", mstorage.counters)
 			}
 		} else {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			fmt.Printf("URL is : %s\n", r.URL.Path)
 			//http.Error(w, err.Error(), 404)
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		}
+		io.WriteString(w, "Hello from counter handler.\n")
 	}
 
 	hni := func(w http.ResponseWriter, r *http.Request) {
-		//io.WriteString(w, "Hello from not implemented handler.\n")
 		http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+		io.WriteString(w, "Hello from not implemented handler.\n")
+
 	}
 
 	http.Handle("/", http.NotFoundHandler())
