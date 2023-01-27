@@ -107,7 +107,7 @@ func main() {
 		matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9.]+$`, urlPath)
 		if matched && (err == nil) {
 			//fmt.Println("Match")
-			w.WriteHeader(http.StatusOK)
+			//w.WriteHeader(http.StatusOK)
 			pathSlice := strings.Split(urlPath, "/")
 			mName := string(pathSlice[3])
 			mValue, err := strconv.ParseFloat(pathSlice[4], 64)
@@ -129,7 +129,7 @@ func main() {
 		matched, err := regexp.MatchString(`\/update\/counter\/[A-Za-z]+\/[0-9]+$`, urlPath)
 		if matched && (err == nil) {
 			//fmt.Println("Match")
-			w.WriteHeader(http.StatusOK)
+			//w.WriteHeader(http.StatusOK)
 			pathSlice := strings.Split(urlPath, "/")
 			mName := string(pathSlice[3])
 			mValue, err := strconv.ParseInt(pathSlice[4], 10, 64)
@@ -144,16 +144,13 @@ func main() {
 		}
 	}
 
-	/* //Root handler
-	hr := func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "Hello from root handler.\n")
-		urlPath := r.URL.Path
-		fmt.Printf("DEBUG: URL is : %s\n", urlPath)
-		//http.Error(w, "Unkonwn URL", 404)
-		http.Error(w, "Error. 404", 404)
-	}*/
+	hni := func(w http.ResponseWriter, r *http.Request) {
+		//io.WriteString(w, "Hello from not implemented handler.\n")
+		http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+	}
 
 	http.Handle("/", http.NotFoundHandler())
+	http.HandleFunc("/update/", hni)
 	http.HandleFunc("/update/gauge/", hg)
 	http.HandleFunc("/update/counter/", hc)
 	server.ListenAndServe()
