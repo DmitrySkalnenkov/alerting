@@ -102,6 +102,7 @@ func main() {
 	//Handler for gauges
 	hg := func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "Hello from gauge handler. \n")
+		w.WriteHeader(http.StatusOK)
 		//fmt.Printf("Req: %s", r.URL.Path)
 		urlPath := r.URL.Path
 		matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9.]+$`, urlPath)
@@ -124,6 +125,7 @@ func main() {
 	//Handler for counters
 	hc := func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "Hello from counter handler.\n")
+		w.WriteHeader(http.StatusOK)
 		urlPath := r.URL.Path
 		matched, err := regexp.MatchString(`\/update\/counter\/[A-Za-z]+\/[0-9]+$`, urlPath)
 		if matched && (err == nil) {
