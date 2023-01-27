@@ -101,7 +101,7 @@ func main() {
 
 	//Handler for gauges
 	hg := func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "Hello from a HandleFunc gauge\n")
+		io.WriteString(w, "Hello from gauge handler. \n")
 		//fmt.Printf("Req: %s", r.URL.Path)
 		urlPath := r.URL.Path
 		matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9.]+$`, urlPath)
@@ -116,13 +116,14 @@ func main() {
 			}
 		} else {
 			fmt.Printf("URL is : %s\n", r.URL.Path)
-			http.Error(w, err.Error(), 404)
+			//http.Error(w, err.Error(), 404)
+			http.Error(w, "Error. 404", 404)
 		}
 
 	}
 	//Handler for counters
 	hc := func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "Hello from a HandleFunc counter\n")
+		io.WriteString(w, "Hello from counter handler.\n")
 		urlPath := r.URL.Path
 		matched, err := regexp.MatchString(`\/update\/counter\/[A-Za-z]+\/[0-9]+$`, urlPath)
 		if matched && (err == nil) {
@@ -136,10 +137,21 @@ func main() {
 			}
 		} else {
 			fmt.Printf("URL is : %s\n", r.URL.Path)
-			http.Error(w, err.Error(), 404)
+			//http.Error(w, err.Error(), 404)
+			http.Error(w, "Error. 404", 404)
 		}
 	}
 
+	/* //Root handler
+	hr := func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, "Hello from root handler.\n")
+		urlPath := r.URL.Path
+		fmt.Printf("DEBUG: URL is : %s\n", urlPath)
+		//http.Error(w, "Unkonwn URL", 404)
+		http.Error(w, "Error. 404", 404)
+	}*/
+
+	http.Handle("/", http.NotFoundHandler())
 	http.HandleFunc("/update/gauge/", hg)
 	http.HandleFunc("/update/counter/", hc)
 	server.ListenAndServe()
