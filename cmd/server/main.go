@@ -33,7 +33,6 @@ func (m MemStorage) PushCounter(metricName string, value int64) {
 	if ok {
 		m.counters[metricName] = m.counters[metricName] + value
 	} else {
-		//fmt.Printf("Counter metric with name  %s is not found.\n", metricName)
 		m.counters[metricName] = value
 	}
 }
@@ -105,8 +104,6 @@ func main() {
 		urlPath := r.URL.Path
 		matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9.]+$`, urlPath)
 		if matched && (err == nil) {
-			//fmt.Println("Match")
-			//w.WriteHeader(http.StatusOK)
 			pathSlice := strings.Split(urlPath, "/")
 			mName := string(pathSlice[3])
 			mValue, err := strconv.ParseFloat(pathSlice[4], 64)
