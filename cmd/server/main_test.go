@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestPushGauge(t *testing.T) {
-	mstorage := new(MemStorage)
+	//mstorage := new(MemStorage)
 	mstorage.gauges = make(map[string]float64)
 	mstorage.counters = make(map[string]int64)
 
@@ -64,7 +67,7 @@ func TestPushGauge(t *testing.T) {
 }
 
 func TestPushCounter(t *testing.T) {
-	mstorage := new(MemStorage)
+	//mstorage := new(MemStorage)
 	mstorage.gauges = make(map[string]float64)
 	mstorage.counters = make(map[string]int64)
 
@@ -165,4 +168,80 @@ func TestContains(t *testing.T) {
 			}
 		})
 	}
+}
+
+//func GaugesHandler(w http.ResponseWriter, r *http.Request) {
+func TestGaugesHandler(t *testing.T) {
+	type want struct {
+		contentType string
+		code        int
+		response    string
+	}
+	tests := []struct {
+		name    string
+		request string
+		want    want
+	}{ //Test table
+		{
+			name:    "positive test #1",
+			request: "/update/gauge/TestMetric/12421234123.0",
+			want: want{
+				contentType: "text/plain",
+				code:        200,
+				response:    `{"status":"ok"}`,
+			},
+		},
+		{
+			name:    "positive test #2",
+			request: "/update/gauge/TestMetric/-232131123.0",
+			want: want{
+				contentType: "text/plain",
+				code:        200,
+				response:    `{"status":"ok"}`,
+			},
+		},
+		{
+			name:    "null metric name ",
+			request: "/update/gauge/",
+			want: want{
+				contentType: "text/plain",
+				code:        404,
+				response:    `{"status":"ok"}`,
+			},
+		},
+		{
+			name:    "bad request",
+			request: "/update/gauge",
+			want: want{
+				contentType: "text/plain",
+				code:        400,
+				response:    `{"status":"ok"}`,
+			},
+		},
+		{
+			name:    "symbolic value",
+			request: "/update/gauge/Metric/rqwer",
+			want: want{
+				contentType: "text/plain",
+				code:        400,
+				response:    `{"status":"ok"}`,
+			},
+		},
+	}
+	for _, tt := range tests {
+		// запускаем каждый тест
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
+			w := httptest.NewRecorder()
+			res := w.Result()
+			defer res.Body.Close()
+			GaugesHandler(w, req)
+			fmt.Printf("Result is %v", w.Result())
+			if res.StatusCode != tt.want.code {
+				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)
+
+			}
+		})
+	}
+
 }

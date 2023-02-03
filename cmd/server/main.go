@@ -82,6 +82,9 @@ func (m MemStorage) PushCounter(metricName string, value int64) {
 }*/
 
 //Handler for gauges
+// /update/gauges/<MetricName>/<MetricValue> then status -- OK (200) and save MetricValue into map with key MetricName
+// /update/gauges/ then status -- NotFound (404)
+// /update/gauges then status -- BadRequest (400)
 func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9.]+$`, urlPath)
