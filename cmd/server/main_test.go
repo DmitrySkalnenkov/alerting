@@ -238,7 +238,6 @@ func TestGaugesHandler(t *testing.T) {
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			defer res.Body.Close()
-			GaugesHandler(w, req)
 			resBody, err := io.ReadAll(res.Body)
 			if err != nil {
 				t.Fatal(err)
@@ -323,11 +322,10 @@ func TestCountersHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(GaugesHandler)
+			h := http.HandlerFunc(CountersHandler)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			defer res.Body.Close()
-			GaugesHandler(w, req)
 			resBody, err := io.ReadAll(res.Body)
 			if err != nil {
 				t.Fatal(err)

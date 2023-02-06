@@ -161,5 +161,4 @@ func main() {
 	http.HandleFunc("/update/gauge/", hg)
 	http.HandleFunc("/update/counter/", hc)
 	server.ListenAndServe()
-
 }
