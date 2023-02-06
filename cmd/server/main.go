@@ -87,7 +87,7 @@ func (m MemStorage) PushCounter(metricName string, value int64) {
 // /update/gauges then status -- BadRequest (400)
 func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
-	matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9.]+$`, urlPath)
+	matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9.-]+$`, urlPath)
 	if matched && (err == nil) {
 		pathSlice := strings.Split(urlPath, "/")
 		mName := string(pathSlice[3])
@@ -110,7 +110,7 @@ func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 //Handler for counters
 func CountersHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
-	matched, err := regexp.MatchString(`\/update\/counter\/[A-Za-z]+\/[0-9]+$`, urlPath)
+	matched, err := regexp.MatchString(`\/update\/counter\/[A-Za-z]+\/[0-9-]+$`, urlPath)
 	if matched && (err == nil) {
 		pathSlice := strings.Split(urlPath, "/")
 		mName := string(pathSlice[3])

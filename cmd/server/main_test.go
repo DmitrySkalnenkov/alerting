@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -184,7 +185,7 @@ func TestGaugesHandler(t *testing.T) {
 	}{ //Test table
 		{
 			name:    "positive test #1",
-			request: "/update/gauge/TestMetric/12421234123.0",
+			request: "http://127.0.0.1:8080/update/gauge/TestMetric/12421234123.0",
 			want: want{
 				contentType: "text/plain",
 				code:        200,
@@ -193,7 +194,7 @@ func TestGaugesHandler(t *testing.T) {
 		},
 		{
 			name:    "positive test #2",
-			request: "/update/gauge/TestMetric/-232131123.0",
+			request: "http://127.0.0.1:8080/update/gauge/TestMetric/-232131123.0",
 			want: want{
 				contentType: "text/plain",
 				code:        200,
@@ -202,7 +203,7 @@ func TestGaugesHandler(t *testing.T) {
 		},
 		{
 			name:    "null metric name ",
-			request: "/update/gauge/",
+			request: "http://127.0.0.1:8080/update/gauge/",
 			want: want{
 				contentType: "text/plain",
 				code:        404,
@@ -211,7 +212,7 @@ func TestGaugesHandler(t *testing.T) {
 		},
 		{
 			name:    "bad request",
-			request: "/update/gauge",
+			request: "http://127.0.0.1:8080/update/gauge",
 			want: want{
 				contentType: "text/plain",
 				code:        400,
@@ -220,7 +221,7 @@ func TestGaugesHandler(t *testing.T) {
 		},
 		{
 			name:    "symbolic value",
-			request: "/update/gauge/Metric/rqwer",
+			request: "http://127.0.0.1:8080/update/gauge/Metric/rqwer",
 			want: want{
 				contentType: "text/plain",
 				code:        400,
@@ -233,15 +234,19 @@ func TestGaugesHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
+			h := http.HandlerFunc(GaugesHandler)
+			h.ServeHTTP(w, req)
 			res := w.Result()
 			defer res.Body.Close()
 			GaugesHandler(w, req)
-			fmt.Printf("Result is %v", w.Result())
+			resBody, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+			fmt.Printf("Status is %s, status code is %d, body is %s. \n", w.Result().Status, w.Result().StatusCode, string(resBody))
 			if res.StatusCode != tt.want.code {
-				t.Errorf("Expected status code %d, got %d", tt.want.code, w.Code)
-
+				t.Errorf("Expected status code %d, got %d", tt.want.code, res.StatusCode)
 			}
 		})
 	}
-
 }
