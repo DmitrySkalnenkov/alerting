@@ -140,7 +140,6 @@ func contains(s []string, str string) bool {
 }
 
 func main() {
-
 	server := &http.Server{
 		Addr: "127.0.0.1:8080",
 	}
@@ -155,7 +154,6 @@ func main() {
 		io.WriteString(w, "Hello from not implemented handler.\n")
 
 	}
-
 	http.Handle("/", http.NotFoundHandler())
 	http.HandleFunc("/update/", hni)
 	http.HandleFunc("/update/gauge/", hg)

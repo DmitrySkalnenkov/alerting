@@ -12,13 +12,11 @@ import (
 )
 
 func sendRequest(mA *[29][3]string, ip string, port int, cl *http.Client) {
-	//<-time.After(10 * time.Second)
 	curURL := ""
 	for row := 0; row < len(mA); row++ {
 		if mA[row][0] != "" {
 			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", ip, strconv.Itoa(port), mA[row][1], mA[row][0], mA[row][2])
-			fmt.Printf("URL is: %s ", curURL)
-			//resp, err := cl.Get(curUrl)
+			//fmt.Printf("URL is: %s ", curURL)
 			request, err := http.NewRequest(http.MethodPost, curURL, nil)
 			request.Header.Set("Content-Type", "text/plain")
 			if err != nil {
@@ -26,7 +24,6 @@ func sendRequest(mA *[29][3]string, ip string, port int, cl *http.Client) {
 				os.Exit(1)
 			}
 			response, err := cl.Do(request)
-
 			if err != nil {
 				fmt.Printf("Error: %s.\n", err)
 				os.Exit(1)
@@ -44,7 +41,6 @@ func sendRequest(mA *[29][3]string, ip string, port int, cl *http.Client) {
 }
 
 func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) {
-	//<-time.After(2 * time.Second)
 	runtime.ReadMemStats(rtm)
 	*PollCount = *PollCount + 1
 	RandomValue := float64(rand.Float64())
@@ -173,7 +169,6 @@ func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) 
 func main() {
 	StartTime := time.Now()
 	fmt.Printf("Start time: %s.\n", string(StartTime.String()))
-	//CurTime := time.Now()
 	var CurTime time.Time
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
