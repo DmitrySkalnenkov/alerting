@@ -5,39 +5,48 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	"os"
 	"runtime"
 	"strconv"
 	"time"
 )
 
-func sendRequest(mA *[29][3]string, ip string, port int, cl *http.Client) {
+type Client struct {
+	IP     string
+	Port   string
+	Client *http.Client
+}
+
+func (cl Client) metricSending(mA *[29][3]string) {
 	curURL := ""
 	for row := 0; row < len(mA); row++ {
 		if mA[row][0] != "" {
-			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", ip, strconv.Itoa(port), mA[row][1], mA[row][0], mA[row][2])
-			//fmt.Printf("URL is: %s ", curURL)
-			request, err := http.NewRequest(http.MethodPost, curURL, nil)
-			request.Header.Set("Content-Type", "text/plain")
-			if err != nil {
-				fmt.Printf("Error: %s.\n", err)
-				os.Exit(1)
-			}
-			response, err := cl.Do(request)
-			if err != nil {
-				fmt.Printf("Error: %s.\n", err)
-				os.Exit(1)
-			}
-			fmt.Printf("Response status code: %s.\n", response.Status)
-			body, err := io.ReadAll(response.Body)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			fmt.Println(string(body))
-			defer response.Body.Close()
+			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
+			cl.sendRequest(curURL)
 		}
 	}
+}
+
+func (cl Client) sendRequest(curURL string) (string, error) {
+	request, err := http.NewRequest(http.MethodPost, curURL, nil)
+	request.Header.Set("Content-Type", "text/plain")
+	if err != nil {
+		fmt.Printf("Error: %s.\n", err)
+		return "", err
+	}
+	response, err := cl.Client.Do(request)
+	if err != nil {
+		fmt.Printf("Error: %s.\n", err)
+		return "", err
+	}
+	fmt.Printf("Response status code: %s.\n", response.Status)
+	body, err := io.ReadAll(response.Body)
+	defer response.Body.Close()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	fmt.Println(string(body))
+	return string(body), nil
 }
 
 func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) {
@@ -174,11 +183,19 @@ func main() {
 	LastReportTime := time.Now()
 	serverIPAddress := "127.0.0.1"
 	serverTCPPort := 8080
+	baseURL := fmt.Sprintf("http://%s:%s", serverIPAddress, strconv.Itoa(serverTCPPort))
+	fmt.Println(baseURL)
+
 	var PollCount int64
 	var rtm runtime.MemStats
 	var MetricArray [29][3]string
-	client := &http.Client{}
-	client.Timeout = 100 * time.Millisecond
+
+	//client := &http.Client{}
+	var cl Client
+	cl.IP = serverIPAddress
+	cl.Port = strconv.Itoa(serverTCPPort)
+	cl.Client = &http.Client{}
+	cl.Client.Timeout = 100 * time.Millisecond
 
 	for {
 		time.Sleep(100 * time.Millisecond)
@@ -190,7 +207,7 @@ func main() {
 		}
 		if CurTime.Sub(LastReportTime) > 10*time.Second {
 			fmt.Printf("ReportTime: %s.\n", string(LastReportTime.String()))
-			sendRequest(&MetricArray, serverIPAddress, serverTCPPort, client)
+			cl.metricSending(&MetricArray)
 			LastReportTime = time.Now()
 		}
 	}
