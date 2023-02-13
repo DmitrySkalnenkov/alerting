@@ -237,12 +237,12 @@ func TestGaugesHandler(t *testing.T) {
 			h := http.HandlerFunc(GaugesHandler)
 			h.ServeHTTP(w, req)
 			res := w.Result()
-			defer res.Body.Close()
 			resBody, err := io.ReadAll(res.Body)
+			res.Body.Close()
 			if err != nil {
 				t.Fatal(err)
 			}
-			fmt.Printf("Status is %s, status code is %d, body is %s. \n", w.Result().Status, w.Result().StatusCode, string(resBody))
+			fmt.Printf("Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
 			if res.StatusCode != tt.want.code {
 				t.Errorf("Expected status code %d, got %d", tt.want.code, res.StatusCode)
 			}
@@ -325,12 +325,12 @@ func TestCountersHandler(t *testing.T) {
 			h := http.HandlerFunc(CountersHandler)
 			h.ServeHTTP(w, req)
 			res := w.Result()
-			defer res.Body.Close()
 			resBody, err := io.ReadAll(res.Body)
+			res.Body.Close()
 			if err != nil {
 				t.Fatal(err)
 			}
-			fmt.Printf("Status is %s, status code is %d, body is %s. \n", w.Result().Status, w.Result().StatusCode, string(resBody))
+			fmt.Printf("Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
 			if res.StatusCode != tt.want.code {
 				t.Errorf("Expected status code %d, got %d", tt.want.code, res.StatusCode)
 			}
