@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io"
+	//"io"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -39,14 +39,14 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 		return "", err
 	}
 	fmt.Printf("Response status code: %s.\n", response.Status)
-	body, err := io.ReadAll(response.Body)
+	/*body, err := io.ReadAll(response.Body)
 	defer response.Body.Close()
 	if err != nil {
 		fmt.Println(err)
 		return "", err
 	}
-	fmt.Println(string(body))
-	return string(body), nil
+	fmt.Printf("Response body is : %s \n", string(body))*/
+	return string(response.Status), nil
 }
 
 func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) {

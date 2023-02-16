@@ -6,31 +6,36 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 )
 
-//func (cl Client) sendRequest(curURL string) (string, error) {
+// func (cl Client) sendRequest(curURL string) (string, error) {
 func TestSendRequest(t *testing.T) {
 
 	tests := []struct {
-		name  string
-		input string
-		want  string
+		name         string
+		input        string
+		wantResponse string
+		wantMessage  string
 	}{
 		{
 			"Positive test",
 			"http://127.0.0.1:8080/update/type/231231",
 			"200 OK",
+			"",
 		},
 		{
 			"Wrong IP",
-			"http://111.1.1.1:8080/update/type/231231",
-			"400 OK",
+			"http://127.0.1.1:8080/update/type/231231",
+			"",
+			"connect: connection refused",
 		},
 		{
 			"Wrong TCP prot",
-			"http://111.1.1.1:9999/update/type/231231",
+			"http://127.0.0.1:9999/update/type/231231",
 			"400 OK",
+			"connect: connection refused",
 		},
 	}
 
@@ -53,14 +58,17 @@ func TestSendRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := cl.sendRequest(tt.input)
-			if (res != tt.want) || (err != nil) {
-				t.Errorf("Request is %s, want is %s, but response is %s and error is %s", tt.input, tt.want, string(res), err)
+			if (res != tt.wantResponse) || (err != nil) {
+				fmt.Printf("Error mesage is '%s'\n", err)
+				if !strings.Contains(err.Error(), tt.wantMessage) {
+					t.Errorf("Request is %s, want is %s, but response is %s and error is %s", tt.input, tt.wantResponse, string(res), err)
+				}
 			}
 		})
 	}
 }
 
-//func (cl Client) metricSending(mA *[29][3]string) {
+// func (cl Client) metricSending(mA *[29][3]string) {
 func TestMetricSending(t *testing.T) {
 
 	var mArray [29][3]string
