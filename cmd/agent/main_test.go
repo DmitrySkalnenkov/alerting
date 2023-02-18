@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -106,4 +107,11 @@ func TestMetricSending(t *testing.T) {
 	cl.metricSending(&mArray)
 }
 
-//func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) {
+// func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) {
+func TestGetMetrics(t *testing.T) {
+	var rtm runtime.MemStats
+	var pollcount int64
+	var metrics [29][3]string
+	getMetrics(&metrics, &pollcount, &rtm)
+	fmt.Printf("Metrics %v: /n", metrics)
+}
