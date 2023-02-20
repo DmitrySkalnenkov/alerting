@@ -30,7 +30,7 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 	request, err := http.NewRequest(http.MethodPost, curURL, nil)
 	request.Header.Set("Content-Type", "text/plain")
 	if err != nil {
-		fmt.Printf("Error: %s.\n", err)
+		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
 	}
 	response, err := cl.Client.Do(request)

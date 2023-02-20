@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	//	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -61,7 +61,7 @@ func TestPushGauge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mstorage.PushGauge(tt.input.MetricName, tt.input.MetricValue)
 			if mstorage.gauges[tt.input.MetricName] != tt.want {
-				t.Errorf("MetricName is %s , want is %f", tt.input.MetricName, tt.want)
+				t.Errorf("TEST_ERROR: MetricName is %s , want is %f", tt.input.MetricName, tt.want)
 			}
 		})
 	}
@@ -120,7 +120,7 @@ func TestPushCounter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mstorage.PushCounter(tt.input.MetricName, tt.input.MetricValue)
 			if mstorage.counters[tt.input.MetricName] != tt.want {
-				t.Errorf("MetricName is %s , actual is %d, want is %d", tt.input.MetricName, mstorage.counters[tt.input.MetricName], tt.want)
+				t.Errorf("TEST_ERROR: MetricName is %s , actual is %d, want is %d", tt.input.MetricName, mstorage.counters[tt.input.MetricName], tt.want)
 			}
 		})
 	}
@@ -165,7 +165,7 @@ func TestContains(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if contains(tt.input.stringArray, tt.input.stringValue) != tt.want {
-				t.Errorf("StringArray is %s , StringValue is %s, want is %t", tt.input.stringArray, tt.input.stringValue, tt.want)
+				t.Errorf("TEST_ERROR: StringArray is %s , StringValue is %s, want is %t", tt.input.stringArray, tt.input.stringValue, tt.want)
 			}
 		})
 	}
@@ -237,14 +237,14 @@ func TestGaugesHandler(t *testing.T) {
 			h := http.HandlerFunc(GaugesHandler)
 			h.ServeHTTP(w, req)
 			res := w.Result()
-			resBody, err := io.ReadAll(res.Body)
+			_, err := io.ReadAll(res.Body)
 			res.Body.Close()
 			if err != nil {
-				t.Fatal(err)
+				t.Errorf("TEST_ERROR: %s:", err)
 			}
-			fmt.Printf("Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
+			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
 			if res.StatusCode != tt.want.code {
-				t.Errorf("Expected status code %d, got %d", tt.want.code, res.StatusCode)
+				t.Errorf("TEST_ERROR: Expected status code %d, got %d", tt.want.code, res.StatusCode)
 			}
 		})
 	}
@@ -325,14 +325,14 @@ func TestCountersHandler(t *testing.T) {
 			h := http.HandlerFunc(CountersHandler)
 			h.ServeHTTP(w, req)
 			res := w.Result()
-			resBody, err := io.ReadAll(res.Body)
+			_, err := io.ReadAll(res.Body)
 			res.Body.Close()
 			if err != nil {
 				t.Fatal(err)
 			}
-			fmt.Printf("Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
+			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
 			if res.StatusCode != tt.want.code {
-				t.Errorf("Expected status code %d, got %d", tt.want.code, res.StatusCode)
+				t.Errorf("TEST_ERROR: Expected status code %d, got %d", tt.want.code, res.StatusCode)
 			}
 		})
 	}
