@@ -1,4 +1,4 @@
-package main
+package agent
 
 import (
 	"fmt"
@@ -35,11 +35,10 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 	}
 	response, err := cl.Client.Do(request)
 	if err != nil {
-		fmt.Printf("ERROR: %s.\n", err)
+		fmt.Printf("Error: %s.\n", err)
 		return "", err
 	}
-	defer response.Body.Close()
-	fmt.Printf("DEBUG: Response status code: %s.\n", response.Status)
+	fmt.Printf("Response status code: %s.\n", response.Status)
 	/*body, err := io.ReadAll(response.Body)
 	defer response.Body.Close()
 	if err != nil {
@@ -47,7 +46,6 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 		return "", err
 	}
 	fmt.Printf("Response body is : %s \n", string(body))*/
-
 	return string(response.Status), nil
 }
 

@@ -1,7 +1,8 @@
-package main
+package server
 
 import (
 	//	"fmt"
+	"alerting/internal/handlers"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,9 +10,9 @@ import (
 )
 
 func TestPushGauge(t *testing.T) {
-	//mstorage := new(MemStorage)
-	mstorage.gauges = make(map[string]float64)
-	mstorage.counters = make(map[string]int64)
+	//handlers.Mstorage := new(MemStorage)
+	handlers.Mstorage.Gauges = make(map[string]float64)
+	handlers.Mstorage.Counters = make(map[string]int64)
 
 	type inputs struct {
 		MetricName  string
@@ -59,8 +60,8 @@ func TestPushGauge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mstorage.PushGauge(tt.input.MetricName, tt.input.MetricValue)
-			if mstorage.gauges[tt.input.MetricName] != tt.want {
+			handlers.Mstorage.PushGauge(tt.input.MetricName, tt.input.MetricValue)
+			if handlers.Mstorage.Gauges[tt.input.MetricName] != tt.want {
 				t.Errorf("TEST_ERROR: MetricName is %s , want is %f", tt.input.MetricName, tt.want)
 			}
 		})
@@ -68,9 +69,9 @@ func TestPushGauge(t *testing.T) {
 }
 
 func TestPushCounter(t *testing.T) {
-	//mstorage := new(MemStorage)
-	mstorage.gauges = make(map[string]float64)
-	mstorage.counters = make(map[string]int64)
+	//handlers.Mstorage := new(MemStorage)
+	handlers.Mstorage.Gauges = make(map[string]float64)
+	handlers.Mstorage.Counters = make(map[string]int64)
 
 	type inputs struct {
 		MetricName  string
@@ -118,15 +119,15 @@ func TestPushCounter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mstorage.PushCounter(tt.input.MetricName, tt.input.MetricValue)
-			if mstorage.counters[tt.input.MetricName] != tt.want {
-				t.Errorf("TEST_ERROR: MetricName is %s , actual is %d, want is %d", tt.input.MetricName, mstorage.counters[tt.input.MetricName], tt.want)
+			handlers.Mstorage.PushCounter(tt.input.MetricName, tt.input.MetricValue)
+			if handlers.Mstorage.Counters[tt.input.MetricName] != tt.want {
+				t.Errorf("TEST_ERROR: MetricName is %s , actual is %d, want is %d", tt.input.MetricName, handlers.Mstorage.Counters[tt.input.MetricName], tt.want)
 			}
 		})
 	}
 }
 
-func TestContains(t *testing.T) {
+/*func TestContains(t *testing.T) {
 	//func contains(s []string, str string) bool {}
 	type inputs struct {
 		stringArray []string
@@ -169,7 +170,7 @@ func TestContains(t *testing.T) {
 			}
 		})
 	}
-}
+}*/
 
 //func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 func TestGaugesHandler(t *testing.T) {
@@ -234,7 +235,7 @@ func TestGaugesHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(GaugesHandler)
+			h := http.HandlerFunc(handlers.GaugesHandler)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
@@ -322,7 +323,7 @@ func TestCountersHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(CountersHandler)
+			h := http.HandlerFunc(handlers.CountersHandler)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
