@@ -38,9 +38,10 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 		fmt.Printf("Error: %s.\n", err)
 		return "", err
 	}
+	defer response.Body.Close()
 	fmt.Printf("Response status code: %s.\n", response.Status)
 	/*body, err := io.ReadAll(response.Body)
-	defer response.Body.Close()
+
 	if err != nil {
 		fmt.Println(err)
 		return "", err
