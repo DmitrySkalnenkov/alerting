@@ -1,33 +1,18 @@
 package server
 
 import (
-	//"alerting/internal"
 	"alerting/internal/handlers"
-	//"alerting/internal/storage"
-	//	"fmt"
+	"alerting/internal/storage"
 	"io"
 	"net/http"
-	//"regexp"
-	//"strconv"
-	//"strings"
 )
-
-/*func contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-
-	return false
-}*/
 
 func main() {
 	server := &http.Server{
 		Addr: "127.0.0.1:8080",
 	}
-	handlers.Mstorage.Gauges = make(map[string]float64)
-	handlers.Mstorage.Counters = make(map[string]int64)
+	storage.Mstorage.Gauges = make(map[string]float64)
+	storage.Mstorage.Counters = make(map[string]int64)
 
 	hg := handlers.GaugesHandler
 	hc := handlers.CountersHandler

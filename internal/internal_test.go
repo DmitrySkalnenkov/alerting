@@ -42,7 +42,7 @@ func TestContains(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if contains(tt.input.stringArray, tt.input.stringValue) != tt.want {
+			if Contains(tt.input.stringArray, tt.input.stringValue) != tt.want {
 				t.Errorf("TEST_ERROR: StringArray is %s , StringValue is %s, want is %t", tt.input.stringArray, tt.input.stringValue, tt.want)
 			}
 		})
