@@ -28,11 +28,13 @@ func main() {
 		http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
 		io.WriteString(w, "Hello from not implemented handler.\n")
 	}
+	hggh := handlers.GetGaugeHandler
 
 	r.Get("/", r.NotFoundHandler())
 	r.Get("/update", hni)
 	r.Get("/update/gauge/", hg)
 	r.Get("/update/counter/", hc)
+	r.Get("/values/gauge/{MetricName}", hggh)
 
 	/*http.Handle("/", http.NotFoundHandler())
 	http.HandleFunc("/update/", hni)

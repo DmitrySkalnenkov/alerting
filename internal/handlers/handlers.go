@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
 )
 
 //Handler for gauges
@@ -25,16 +27,19 @@ func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 		mValue, err := strconv.ParseFloat(pathSlice[4], 64)
 		if internal.Contains(internal.MetricNameArray, mName) && (err == nil) {
 			storage.Mstorage.PushGauge(mName, mValue)
-			fmt.Printf("Mstorage gauges is: %v.\n", storage.Mstorage.Gauges)
+			fmt.Printf("DEBUG: Mstorage gauges is: %v.\n", storage.Mstorage.Gauges)
+			io.WriteString(w, "DEBUG: Hello from gauge handler (Status OK). \n")
 		}
 	} else if urlPath == "/update/gauge/" {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		fmt.Printf("URL is : %s\n", r.URL.Path)
+		io.WriteString(w, "DEBUG: Hello from gauge handler (Status Not Found). \n")
 	} else {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		fmt.Printf("URL is : %s\n", r.URL.Path)
+		io.WriteString(w, "DEBUG: Hello from gauge handler (Bad Request). \n")
 	}
-	io.WriteString(w, "Hello from gauge handler. \n")
+	io.WriteString(w, "DEBUG: Hello from gauge handler (Default). \n")
 
 }
 
@@ -58,4 +63,18 @@ func CountersHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("URL is : %s\n", r.URL.Path)
 	}
 	io.WriteString(w, "Hello from counter handler.\n")
+}
+
+//Handler for getting gauge values
+
+func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
+	urlPath := r.URL.Path
+	matched, err := regexp.MatchString(`\/value\/gauge\/[A-Za-z]+`, urlPath)
+	if matched && (err == nil) {
+		curMetricName := chi.URLParam(r, "MetricName")
+		if internal.Contains(internal.MetricNameArray, curMetricName) && (err == nil) {
+			curMetricValue := storage.Mstorage.PopGauge(curMetricName)
+			fmt.Printf("DEBUG: Value for %s is %s", curMetricName, curMetricValue)
+		}
+	}
 }
