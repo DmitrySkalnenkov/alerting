@@ -27,12 +27,12 @@ func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 		mName := string(pathSlice[3])
 		mValue, err := strconv.ParseFloat(pathSlice[4], 64)
 		fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", mName, mValue)
-		if internal.Contains(internal.MetricNameArray, mName) && (err == nil) {
+		if err == nil {
 			storage.Mstorage.PushGauge(mName, mValue)
 			fmt.Printf("DEBUG: Mstorage gauges is %v.\n", storage.Mstorage.Gauges)
 			io.WriteString(w, "Hello from gauge handler (Status OK).\n")
 		} else {
-			io.WriteString(w, "Wrong MetricName.\n")
+			io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
 		}
 	} else if (err == nil) && (urlPath == "/update/gauge/") {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -55,12 +55,12 @@ func CountersHandler(w http.ResponseWriter, r *http.Request) {
 		mName := string(pathSlice[3])
 		mValue, err := strconv.ParseInt(pathSlice[4], 10, 64)
 		fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", mName, mValue)
-		if internal.Contains(internal.MetricNameArray, mName) && (err == nil) {
+		if err == nil {
 			storage.Mstorage.PushCounter(mName, mValue)
 			fmt.Printf("DEBUG: Mstorage counter is %v.\n", storage.Mstorage.Counters)
 			io.WriteString(w, "Hello from counter handler (Status OK).\n")
 		} else {
-			io.WriteString(w, "Wrong MetricName.\n")
+			io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
 		}
 	} else if (err == nil) && (urlPath == "/update/counter/") {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
