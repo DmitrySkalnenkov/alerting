@@ -20,7 +20,7 @@ func (m MemStorage) PopGauge(metricName string) float64 {
 	if ok {
 		return m.Gauges[metricName]
 	} else {
-		fmt.Printf("Gauge metric with name  %s is not found.\n", metricName)
+		fmt.Printf("DEBUG: Gauge metric with name %v is not found.\n", metricName)
 		return 0
 	}
 }
@@ -34,12 +34,12 @@ func (m MemStorage) PushCounter(metricName string, value int64) {
 	}
 }
 
-/*func (m MemStorage) PopCounter(metricName string) int64 {
-	_, ok := m.counters[metricName]
+func (m MemStorage) PopCounter(metricName string) int64 {
+	_, ok := m.Counters[metricName]
 	if ok {
-		return m.counters[metricName]
+		return m.Counters[metricName]
 	} else {
-		fmt.Printf("Gauge metric with name  %s is not found.\n", metricName)
+		fmt.Printf("DEBUG: Counter metric with name  %s is not found.\n", metricName)
 		return 0
 	}
-}*/
+}

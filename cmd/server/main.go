@@ -29,16 +29,18 @@ func main() {
 		io.WriteString(w, "Hello from not implemented handler.\n")
 	}
 	hggh := handlers.GetGaugeHandler
+	hgch := handlers.GetCounterHandler
 
-	r.Get("/", r.NotFoundHandler())
-	r.Get("/update", hni)
-	r.Get("/update/gauge/", hg)
-	r.Get("/update/counter/", hc)
-	r.Get("/values/gauge/{MetricName}", hggh)
+	r.HandleFunc("/", r.NotFoundHandler())
+	r.HandleFunc("/update", hni)
+	r.HandleFunc("/update/gauge/*", hg)
+	r.HandleFunc("/update/counter/*", hc)
+	r.HandleFunc("/value/gauge/{MetricName}", hggh)
+	r.HandleFunc("/value/counter/{MetricName}", hgch)
 
 	/*http.Handle("/", http.NotFoundHandler())
 	http.HandleFunc("/update/", hni)
-	http.HandleFunc("/update/gauge/", hg)
+	http.HandleFunc("/update/gauge/*", hg)
 	http.HandleFunc("/update/counter/", hc)*/
 
 	http.ListenAndServe("127.0.0.1:8080", r)
