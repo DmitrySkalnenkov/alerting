@@ -32,7 +32,7 @@ func main() {
 	hgch := handlers.GetCounterHandler
 
 	r.HandleFunc("/", r.NotFoundHandler())
-	r.HandleFunc("/update", hni)
+	r.HandleFunc("/update/*", hni)
 	r.HandleFunc("/update/gauge/*", hg)
 	r.HandleFunc("/update/counter/*", hc)
 	r.HandleFunc("/value/gauge/{MetricName}", hggh)
