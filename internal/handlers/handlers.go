@@ -21,7 +21,7 @@ import (
 func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	fmt.Printf("DEBUG: Gauge handler. URL is %s.\n", string(urlPath))
-	matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z]+\/[0-9.-]+$`, urlPath)
+	matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z0-9]+\/[0-9.-]+$`, urlPath)
 	if matched && (err == nil) {
 		pathSlice := strings.Split(urlPath, "/")
 		mName := string(pathSlice[3])
@@ -92,7 +92,7 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	fmt.Printf("INFO: URL is : %s.\n", urlPath)
-	matched, err := regexp.MatchString(`\/value\/counter\/[A-Za-z]+`, urlPath)
+	matched, err := regexp.MatchString(`\/value\/counter\/[A-Za-z0-9]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
 		if internal.Contains(internal.MetricNameArray, curMetricName) {
