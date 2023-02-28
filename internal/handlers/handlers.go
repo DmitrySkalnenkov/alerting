@@ -80,7 +80,7 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 	matched, err := regexp.MatchString(`\/value\/gauge\/[A-Za-z]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
-		if internal.Contains(internal.MetricNameArray, curMetricName) && (err == nil) {
+		if internal.Contains(internal.MetricNameArray, curMetricName) {
 			curMetricValue := storage.Mstorage.PopGauge(curMetricName)
 			fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
 			io.WriteString(w, fmt.Sprintf("Value for %s is %v.\n", curMetricName, curMetricValue))
@@ -95,7 +95,7 @@ func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
 	matched, err := regexp.MatchString(`\/value\/counter\/[A-Za-z]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
-		if internal.Contains(internal.MetricNameArray, curMetricName) && (err == nil) {
+		if internal.Contains(internal.MetricNameArray, curMetricName) {
 			curMetricValue := storage.Mstorage.PopCounter(curMetricName)
 			fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
 			io.WriteString(w, fmt.Sprintf("Value for %s is %v.\n", curMetricName, curMetricValue))
