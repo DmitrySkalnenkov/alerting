@@ -45,7 +45,7 @@ func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//Handler for counters
+// Handler for counters
 func CountersHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	fmt.Printf("DEBUG: Counter handler. URL is %s.\n", string(urlPath))
@@ -73,7 +73,7 @@ func CountersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//Handler for getting gauge values
+// Handler for getting gauge values
 func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	fmt.Printf("INFO: URL is : %s.\n", urlPath)
@@ -88,7 +88,7 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//Handler for getting counter values
+// Handler for getting counter values
 func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	fmt.Printf("INFO: URL is : %s.\n", urlPath)

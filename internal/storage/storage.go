@@ -9,7 +9,17 @@ type MemStorage struct {
 	Counters map[string]int64
 }
 
-var Mstorage = new(MemStorage)
+//var Mstorage = new(MemStorage)
+
+var Mstorage = NewMemStorage()
+
+func NewMemStorage() *MemStorage {
+	ms := &MemStorage{
+		Gauges:   make(map[string]float64),
+		Counters: make(map[string]int64),
+	}
+	return ms
+}
 
 func (m MemStorage) PushGauge(metricName string, value float64) {
 	m.Gauges[metricName] = value

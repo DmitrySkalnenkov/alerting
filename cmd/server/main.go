@@ -2,7 +2,7 @@ package main
 
 import (
 	"alerting/internal/handlers"
-	"alerting/internal/storage"
+	//"alerting/internal/storage"
 	"io"
 	"net/http"
 
@@ -11,15 +11,12 @@ import (
 )
 
 func main() {
-	/*server := &http.Server{
-		Addr: "127.0.0.1:8080",
-	}*/
-
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	storage.Mstorage.Gauges = make(map[string]float64)
-	storage.Mstorage.Counters = make(map[string]int64)
+	//Mstorage := storage.NewMemStorage()
+	//Mstorage.Gauges = make(map[string]float64)
+	//Mstorage.Counters = make(map[string]int64)
 
 	hg := handlers.GaugesHandler
 	hc := handlers.CountersHandler
