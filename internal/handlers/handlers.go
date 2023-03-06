@@ -80,10 +80,12 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 	matched, err := regexp.MatchString(`\/value\/gauge\/[A-Za-z0-9]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
-		if internal.Contains(internal.MetricNameArray, curMetricName) {
+		fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
+		_, ok := storage.Mstorage.Gauges[curMetricName]
+		if ok {
 			curMetricValue := storage.Mstorage.PopGauge(curMetricName)
 			fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
-			io.WriteString(w, fmt.Sprintf("Value for %s is %v.\n", curMetricName, curMetricValue))
+			io.WriteString(w, fmt.Sprintf("%v", curMetricValue))
 		}
 	}
 }

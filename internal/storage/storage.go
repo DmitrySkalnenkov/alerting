@@ -28,9 +28,10 @@ func (m MemStorage) PushGauge(metricName string, value float64) {
 func (m MemStorage) PopGauge(metricName string) float64 {
 	_, ok := m.Gauges[metricName]
 	if ok {
+		fmt.Printf("DEBUG: Matched. Gauge metric with name %v is found.\n", metricName)
 		return m.Gauges[metricName]
 	} else {
-		fmt.Printf("DEBUG: Gauge metric with name %v is not found.\n", metricName)
+		fmt.Printf("DEBUG: Don't matched. Gauge metric with name %v is not found.\n", metricName)
 		return 0
 	}
 }
