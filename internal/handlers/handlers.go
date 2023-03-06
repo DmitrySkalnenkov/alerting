@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"alerting/internal"
+	//"alerting/internal"
 	"alerting/internal/storage"
 	"fmt"
 	"io"
@@ -97,10 +97,12 @@ func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
 	matched, err := regexp.MatchString(`\/value\/counter\/[A-Za-z0-9]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
-		if internal.Contains(internal.MetricNameArray, curMetricName) {
+		fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Counters)
+		_, ok := storage.Mstorage.Counters[curMetricName]
+		if ok {
 			curMetricValue := storage.Mstorage.PopCounter(curMetricName)
 			fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
-			io.WriteString(w, fmt.Sprintf("Value for %s is %v.\n", curMetricName, curMetricValue))
+			io.WriteString(w, fmt.Sprintf("%v", curMetricValue))
 		}
 	}
 }
