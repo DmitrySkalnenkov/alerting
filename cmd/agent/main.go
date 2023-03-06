@@ -35,18 +35,11 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 	}
 	response, err := cl.Client.Do(request)
 	if err != nil {
-		fmt.Printf("Error: %s.\n", err)
+		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
 	}
 	defer response.Body.Close()
 	fmt.Printf("Response status code: %s.\n", response.Status)
-	/*body, err := io.ReadAll(response.Body)
-
-	if err != nil {
-		fmt.Println(err)
-		return "", err
-	}
-	fmt.Printf("Response body is : %s \n", string(body))*/
 	return string(response.Status), nil
 }
 
@@ -191,7 +184,6 @@ func main() {
 	var rtm runtime.MemStats
 	var MetricArray [29][3]string
 
-	//client := &http.Client{}
 	var cl Client
 	cl.IP = serverIPAddress
 	cl.Port = strconv.Itoa(serverTCPPort)

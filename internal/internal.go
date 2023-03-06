@@ -1,6 +1,6 @@
 package internal
 
-var MetricNameArray = []string{
+/*var MetricNameArray = []string{
 	"Alloc",
 	"BuckHashSys",
 	"Frees",
@@ -30,7 +30,7 @@ var MetricNameArray = []string{
 	"TotalAlloc",
 	"RandomValue",
 	"PollCount",
-}
+}*/
 
 func Contains(s []string, str string) bool {
 	for _, v := range s {
