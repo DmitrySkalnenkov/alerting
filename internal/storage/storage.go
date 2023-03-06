@@ -9,8 +9,6 @@ type MemStorage struct {
 	Counters map[string]int64
 }
 
-//var Mstorage = new(MemStorage)
-
 var Mstorage = NewMemStorage()
 
 func NewMemStorage() *MemStorage {
@@ -28,10 +26,10 @@ func (m MemStorage) PushGauge(metricName string, value float64) {
 func (m MemStorage) PopGauge(metricName string) float64 {
 	_, ok := m.Gauges[metricName]
 	if ok {
-		fmt.Printf("DEBUG: Matched. Gauge metric with name %v is found.\n", metricName)
+		fmt.Printf("DEBUG: Gauge metric with name %v is found.\n", metricName)
 		return m.Gauges[metricName]
 	} else {
-		fmt.Printf("DEBUG: Don't matched. Gauge metric with name %v is not found.\n", metricName)
+		fmt.Printf("DEBUG: Gauge metric with name %v is not found.\n", metricName)
 		return 0
 	}
 }
@@ -48,6 +46,7 @@ func (m MemStorage) PushCounter(metricName string, value int64) {
 func (m MemStorage) PopCounter(metricName string) int64 {
 	_, ok := m.Counters[metricName]
 	if ok {
+		fmt.Printf("DEBUG: Counter metric with name %v is found.\n", metricName)
 		return m.Counters[metricName]
 	} else {
 		fmt.Printf("DEBUG: Counter metric with name  %s is not found.\n", metricName)

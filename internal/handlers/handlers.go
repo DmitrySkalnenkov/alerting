@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-//Handler for gauges
+//Handler for updating gauge value
 // /update/gauges/<MetricName>/<MetricValue> then status -- OK (200) and save MetricValue into map with key MetricName
 // /update/gauges/ then status -- NotFound (404)
 // /update/gauges then status -- BadRequest (400)
@@ -45,7 +45,7 @@ func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Handler for counters
+// Handler for updating counter value
 func CountersHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	fmt.Printf("DEBUG: Counter handler. URL is %s.\n", string(urlPath))
@@ -68,15 +68,15 @@ func CountersHandler(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "DEBUG: Hello from counter handler (Status Not Found). \n")
 	} else {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		fmt.Printf("INFO: URL is : %s.\n", r.URL.Path)
+		fmt.Printf("DEBUG: URL is : %s.\n", r.URL.Path)
 		io.WriteString(w, "DEBUG: Hello from counter handler (Bad Request). \n")
 	}
 }
 
-// Handler for getting gauge values
+// Handler for getting gauge value
 func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
-	fmt.Printf("INFO: URL is : %s.\n", urlPath)
+	fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
 	matched, err := regexp.MatchString(`\/value\/gauge\/[A-Za-z0-9]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
@@ -92,10 +92,10 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Handler for getting counter values
+// Handler for getting counter value
 func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
-	fmt.Printf("INFO: URL is : %s.\n", urlPath)
+	fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
 	matched, err := regexp.MatchString(`\/value\/counter\/[A-Za-z0-9]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
@@ -108,5 +108,21 @@ func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
+	}
+}
+
+//Handler for getting all current metric values
+func GetAllMetricsHandler(w http.ResponseWriter, r *http.Request) {
+	urlPath := r.URL.Path
+	fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
+	fmt.Printf("DEBUG: MemStorage gauges map %v.\n", storage.Mstorage.Gauges)
+	fmt.Printf("DEBUG: MemStorage counters map is %v.\n", storage.Mstorage.Counters)
+	for mName, mValue := range storage.Mstorage.Gauges {
+		fmt.Printf("%v - %v\n", mName, mValue)
+		io.WriteString(w, fmt.Sprintf("%v - %v\n", mName, mValue))
+	}
+	for mName, mValue := range storage.Mstorage.Counters {
+		fmt.Printf("%v - %v\n", mName, mValue)
+		io.WriteString(w, fmt.Sprintf("%v - %v\n", mName, mValue))
 	}
 }
