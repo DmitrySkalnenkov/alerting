@@ -86,6 +86,8 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 			curMetricValue := storage.Mstorage.PopGauge(curMetricName)
 			fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
 			io.WriteString(w, fmt.Sprintf("%v", curMetricValue))
+		} else {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	}
 }
@@ -103,6 +105,8 @@ func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
 			curMetricValue := storage.Mstorage.PopCounter(curMetricName)
 			fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
 			io.WriteString(w, fmt.Sprintf("%v", curMetricValue))
+		} else {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	}
 }
