@@ -1,14 +1,11 @@
 package storage
 
 import (
-	//"alerting/internal/handlers"
 	"testing"
 )
 
 func TestPushGauge(t *testing.T) {
 	Mstorage = NewMemStorage()
-	//Mstorage.Gauges = make(map[string]float64)
-	//Mstorage.Counters = make(map[string]int64)
 
 	type inputs struct {
 		MetricName  string
@@ -65,7 +62,6 @@ func TestPushGauge(t *testing.T) {
 }
 
 func TestPushCounter(t *testing.T) {
-	//handlers.Mstorage := new(MemStorage)
 	Mstorage.Gauges = make(map[string]float64)
 	Mstorage.Counters = make(map[string]int64)
 
