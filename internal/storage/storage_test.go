@@ -1,8 +1,32 @@
 package storage
 
 import (
+	"fmt"
 	"testing"
 )
+
+func TestPushMetric(t *testing.T) {
+	var mStorage MetricsStorage
+	var curMetric Metrics
+	var wantMetric Metrics
+	curMetric.ID = "TestMetric1"
+	curMetric.MType = "gauge"
+	curMetric.Value = new(float64)
+	(*curMetric.Value) = 123.321
+
+	wantMetric.ID = "TestMetric1"
+	wantMetric.MType = "gauge"
+	wantMetric.Value = new(float64)
+	(*wantMetric.Value) = 123.321
+
+	mStorage.PushMetric(curMetric)
+	fmt.Printf("TEST_DEBUG: Metric storage is %v, %v, %v.\n", mStorage[0].ID, *mStorage[0].Value, mStorage[0].MType)
+	if mStorage[0].ID != wantMetric.ID ||
+		mStorage[0].MType != wantMetric.MType ||
+		*mStorage[0].Value != *wantMetric.Value {
+		t.Errorf("MetricStorage data: %v, but shoud be %v \n", mStorage[0], wantMetric)
+	}
+}
 
 func TestPushGauge(t *testing.T) {
 	Mstorage = NewMemStorage()

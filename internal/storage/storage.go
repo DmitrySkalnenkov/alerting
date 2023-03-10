@@ -1,15 +1,42 @@
 package storage
 
-//import (
-//	"fmt"
-//)
+import (
+	"fmt"
+)
 
 type MemStorage struct {
 	Gauges   map[string]float64
 	Counters map[string]int64
 }
 
+type Metrics struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+}
+
+type MetricsStorage []Metrics
+
 var Mstorage = NewMemStorage()
+
+func (pm *MetricsStorage) PushMetric(curMetric Metrics) {
+	for i := 0; i < len(*pm); i++ {
+		if (*pm)[i].ID == curMetric.ID {
+			switch curMetric.MType {
+			case "gauge":
+				(*pm)[i].MType = "gauge"
+				(*pm)[i].Value = curMetric.Value
+			case "counter":
+				(*pm)[i].MType = "counter"
+				(*pm)[i].Delta = curMetric.Delta
+			}
+			return
+		}
+	}
+	(*pm) = append((*pm), curMetric)
+	fmt.Printf("DEBUG: MetricStorage is %v \n", (*(*pm)[0].Value))
+}
 
 func NewMemStorage() *MemStorage {
 	ms := &MemStorage{
