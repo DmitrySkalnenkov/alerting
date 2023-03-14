@@ -1,30 +1,52 @@
 package storage
 
 import (
-	"fmt"
+	//"fmt"
 	"testing"
 )
 
 func TestPushMetric(t *testing.T) {
 	var mStorage MetricsStorage
-	var curMetric Metrics
-	var wantMetric Metrics
-	curMetric.ID = "TestMetric1"
-	curMetric.MType = "gauge"
-	curMetric.Value = new(float64)
-	(*curMetric.Value) = 123.321
 
-	wantMetric.ID = "TestMetric1"
-	wantMetric.MType = "gauge"
-	wantMetric.Value = new(float64)
-	(*wantMetric.Value) = 123.321
-
-	mStorage.PushMetric(curMetric)
-	fmt.Printf("TEST_DEBUG: Metric storage is %v, %v, %v.\n", mStorage[0].ID, *mStorage[0].Value, mStorage[0].MType)
-	if mStorage[0].ID != wantMetric.ID ||
-		mStorage[0].MType != wantMetric.MType ||
-		*mStorage[0].Value != *wantMetric.Value {
-		t.Errorf("MetricStorage data: %v, but shoud be %v \n", mStorage[0], wantMetric)
+	tests := []struct {
+		name  string
+		input Metrics
+		want  Metrics
+	}{
+		{
+			name: "Set gauge",
+			input: Metrics{
+				ID:    "TestMetric1",
+				MType: "gauge",
+				Value: PointOf(123.321),
+			},
+			want: Metrics{
+				ID:    "TestMetric1",
+				MType: "gauge",
+				Value: PointOf(123.321),
+			},
+		},
+		{
+			name: "Set counter",
+			input: Metrics{
+				ID:    "TestMetric2",
+				MType: "counter",
+				Delta: PointOf(int64(123)),
+			},
+			want: Metrics{
+				ID:    "TestMetric2",
+				MType: "counter",
+				Delta: PointOf(int64(123)),
+			},
+		},
+	}
+	for i, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mStorage.PushMetric(tt.input)
+			if !isMetricsEqual(mStorage[i], tt.want) {
+				t.Errorf("TEST_ERROR: Current metric is %v", mStorage[i])
+			}
+		})
 	}
 }
 
@@ -86,7 +108,6 @@ func TestPushGauge(t *testing.T) {
 }
 
 func TestPushCounter(t *testing.T) {
-	//handlers.Mstorage := new(MemStorage)
 	Mstorage.Gauges = make(map[string]float64)
 	Mstorage.Counters = make(map[string]int64)
 

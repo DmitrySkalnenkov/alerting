@@ -35,7 +35,7 @@ func (pm *MetricsStorage) PushMetric(curMetric Metrics) {
 		}
 	}
 	(*pm) = append((*pm), curMetric)
-	fmt.Printf("DEBUG: MetricStorage is %v \n", (*(*pm)[0].Value))
+	fmt.Printf("DEBUG: MetricStorage is %v \n", (*pm))
 }
 
 func NewMemStorage() *MemStorage {
@@ -79,4 +79,27 @@ func (m MemStorage) PopCounter(metricName string) int64 {
 		//fmt.Printf("DEBUG: Counter metric with name  %s is not found.\n", metricName)
 		return 0
 	}
+}
+
+func isMetricsEqual(m1 Metrics, m2 Metrics) (res bool) {
+	if m1.ID == m2.ID && m1.MType == m2.MType {
+		if m1.Value != nil && m2.Value != nil {
+			if *m1.Value == *m2.Value {
+				fmt.Printf("DEBUG: Metric1 value is %v, Metric2 value is %v.\n", *m1.Value, *m2.Value)
+				return true
+			}
+		} else if m1.Delta != nil && m2.Delta != nil {
+			if *m1.Delta == *m2.Delta {
+				fmt.Printf("DEBUG: Metric1 delta is %v, Metric2 delta is %v.\n", *m1.Delta, *m2.Delta)
+				return true
+			}
+		}
+		return false
+	} else {
+		return false
+	}
+}
+
+func PointOf[T any](value T) *T {
+	return &value
 }
