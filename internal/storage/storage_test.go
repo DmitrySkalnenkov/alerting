@@ -1,11 +1,11 @@
 package storage
 
 import (
-	//"fmt"
+	"fmt"
 	"testing"
 )
 
-func TestPushMetric(t *testing.T) {
+func TestSetMetric(t *testing.T) {
 	var mStorage MetricsStorage
 
 	tests := []struct {
@@ -42,9 +42,51 @@ func TestPushMetric(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mStorage.PushMetric(tt.input)
+			mStorage.SetMetric(tt.input)
 			if !isMetricsEqual(mStorage[i], tt.want) {
 				t.Errorf("TEST_ERROR: Current metric is %v", mStorage[i])
+			}
+		})
+	}
+}
+
+func TestGetMetric(t *testing.T) {
+	var ms MetricsStorage
+	ms = MetricsStorage{
+		Metrics{ID: "TestMetric1", MType: "gauge", Value: PointOf(123.321)},
+		Metrics{ID: "TestMetric2", MType: "counter", Delta: PointOf(int64(123))},
+	}
+	fmt.Printf("DEBUG: mStorage is %v. \n", ms)
+
+	type inputs struct {
+		MetricName string
+		MetricType string
+	}
+
+	tests := []struct {
+		name  string
+		input inputs
+		want  Metrics
+	}{
+		{
+			name: "Get gauge",
+			input: inputs{
+				MetricName: "TestMetric1",
+				MetricType: "gauge",
+			},
+			want: Metrics{
+				ID:    "TestMetric1",
+				MType: "gauge",
+				Value: PointOf(123.321),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			curMetric := ms.GetMetric(tt.input.MetricName, tt.input.MetricType)
+			if !isMetricsEqual(curMetric, tt.want) {
+				t.Errorf("TEST_ERROR: Current metric is %v, want is %v ", curMetric, tt.want)
 			}
 		})
 	}
