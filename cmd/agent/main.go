@@ -1,6 +1,9 @@
 package main
 
 import (
+	"alerting/internal/storage"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -32,6 +35,28 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
 	}
+	response, err := cl.Client.Do(request)
+	if err != nil {
+		fmt.Printf("ERROR: %s.\n", err)
+		return "", err
+	}
+	defer response.Body.Close()
+	fmt.Printf("Response status code: %s.\n", response.Status)
+	return string(response.Status), nil
+}
+
+func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error) {
+	txJSON, err := json.Marshal(m)
+	if err != nil {
+		fmt.Printf("ERROR: %s.\n", err)
+		return "", err
+	}
+	request, err := http.NewRequest(http.MethodPost, curURL, bytes.NewBuffer(txJSON))
+	if err != nil {
+		fmt.Printf("ERROR: %s.\n", err)
+		return "", err
+	}
+	request.Header.Set("Content-Type", "application/json")
 	response, err := cl.Client.Do(request)
 	if err != nil {
 		fmt.Printf("ERROR: %s.\n", err)

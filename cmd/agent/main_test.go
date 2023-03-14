@@ -1,6 +1,7 @@
 package main
 
 import (
+	"alerting/internal/storage"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -61,6 +62,77 @@ func TestSendRequest(t *testing.T) {
 				//fmt.Printf("Error mesage is '%s'\n", err)
 				if !strings.Contains(err.Error(), tt.wantMessage) {
 					t.Errorf("TEST_ERROR: Request is %s, want is %s, but response is %s and error is %s", tt.input, tt.wantResponse, string(res), err)
+				}
+			}
+		})
+	}
+}
+
+func TestSendJSONMetric(t *testing.T) {
+
+	type inputs struct {
+		url    string
+		metric storage.Metrics
+	}
+
+	tests := []struct {
+		name         string
+		input        inputs
+		wantResponse string
+		wantMessage  string
+	}{
+		{
+			name: "Positive test gauge",
+			input: inputs{
+				url: "http://127.0.0.1:8080/update/",
+				metric: storage.Metrics{
+					ID:    "TestMetric1",
+					MType: "gauge",
+					Value: storage.PointOf(123.321),
+				},
+			},
+			wantResponse: "200 OK",
+			wantMessage:  "connect: connection refused",
+		},
+		{
+			name: "Positive test counter",
+			input: inputs{
+				url: "http://127.0.0.1:8080/update/",
+				metric: storage.Metrics{
+					ID:    "TestMetric1",
+					MType: "counter",
+					Delta: storage.PointOf(int64(123)),
+				},
+			},
+			wantResponse: "200 OK",
+			wantMessage:  "connect: connection refused",
+		},
+	}
+
+	l, err := net.Listen("tcp", "127.0.0.1:8080")
+	if err != nil {
+		t.Errorf("TEST_ERROR: Test server creating was failed: %s", err)
+	}
+
+	s := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	}))
+	s.Listener.Close()
+	s.Listener = l
+	defer s.Close()
+	s.Start()
+
+	var cl Client
+	cl.IP = "127.0.0.1"
+	cl.Port = "8080"
+	cl.Client = s.Client()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := cl.sendJSONMetric(tt.input.url, tt.input.metric)
+			if (res != tt.wantResponse) || (err != nil) {
+				//fmt.Printf("Error mesage is '%s'\n", err)
+				if !strings.Contains(err.Error(), tt.wantMessage) {
+					t.Errorf("TEST_ERROR: Request is %s, want is %s, but response is %s and error is %s", tt.input.url, tt.wantResponse, string(res), err)
 				}
 			}
 		})
