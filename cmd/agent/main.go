@@ -18,6 +18,7 @@ type Client struct {
 	Client *http.Client
 }
 
+// Sends metrics to server
 func (cl Client) metricSending(mA *[29][3]string) {
 	curURL := ""
 	for row := 0; row < len(mA); row++ {
@@ -28,6 +29,7 @@ func (cl Client) metricSending(mA *[29][3]string) {
 	}
 }
 
+// Send request by plain text by POST method
 func (cl Client) sendRequest(curURL string) (string, error) {
 	request, err := http.NewRequest(http.MethodPost, curURL, nil)
 	request.Header.Set("Content-Type", "text/plain")
@@ -45,6 +47,7 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 	return string(response.Status), nil
 }
 
+// Sends request by POST method with content type "application/json"
 func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error) {
 	txJSON, err := json.Marshal(m)
 	if err != nil {
@@ -67,6 +70,7 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 	return string(response.Status), nil
 }
 
+// Get metrics and store them into array (also incremtnt PollCount and get new RandomValue)
 func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) {
 	runtime.ReadMemStats(rtm)
 	*PollCount = *PollCount + 1

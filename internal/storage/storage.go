@@ -13,41 +13,52 @@ type Metrics struct {
 
 type MetricsStorage []Metrics
 
-func (pm *MetricsStorage) SetMetric(curMetric Metrics) {
+func NewMetricStorage() *MetricsStorage {
+	var M *MetricsStorage
+	M = new(MetricsStorage)
+	return M
+}
+
+var MetStorage = NewMetricStorage()
+
+var NilMetric = Metrics{
+	ID:    "",
+	MType: "",
+	Delta: nil,
+	Value: nil,
+}
+
+// SetMetric -- Metric setter
+func (pm *MetricsStorage) SetMetric(m Metrics) {
 	for i := 0; i < len(*pm); i++ {
-		if (*pm)[i].ID == curMetric.ID {
-			switch curMetric.MType {
-			case "gauge":
+		if (*pm)[i].ID == m.ID {
+			switch m.MType {
+			case `gauge`:
 				(*pm)[i].MType = "gauge"
-				(*pm)[i].Value = curMetric.Value
-			case "counter":
+				(*pm)[i].Value = m.Value
+			case `counter`:
 				(*pm)[i].MType = "counter"
-				(*pm)[i].Delta = curMetric.Delta
+				(*pm)[i].Delta = m.Delta
 			}
 			return
 		}
 	}
-	(*pm) = append((*pm), curMetric)
+	*pm = append(*pm, m)
 	fmt.Printf("DEBUG: MetricStorage is %v \n", (*pm))
 }
 
+// GetMetric -- metric getter, if no metric return nilMetric
 func (pm *MetricsStorage) GetMetric(metricID string, metricType string) Metrics {
 	for i := 0; i < len(*pm); i++ {
 		if (*pm)[i].ID == metricID && (*pm)[i].MType == metricType {
 			return (*pm)[i]
 		}
 	}
-	var nilMetric Metrics
-	nilMetric = Metrics{
-		ID:    "",
-		MType: "",
-		Value: nil,
-		Delta: nil,
-	}
 	fmt.Printf("DEBUG: MetricName %v with type %v not found.\n", metricID, metricType)
-	return nilMetric
+	return NilMetric
 }
 
+// Comparing metric if them equal then true
 func isMetricsEqual(m1 Metrics, m2 Metrics) (res bool) {
 	if m1.ID == m2.ID && m1.MType == m2.MType {
 		if m1.Value != nil && m2.Value != nil {

@@ -106,7 +106,7 @@ func TestPushGauge(t *testing.T) {
 		want  float64
 	}{
 		{
-			name: "Positve test",
+			name: "Positive test",
 			input: inputs{
 				MetricName:  "TestMetric",
 				MetricValue: 123,

@@ -45,6 +45,40 @@ func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//var MS = storage.NewMetricStorage()
+
+func GaugesHandlerAPI2(w http.ResponseWriter, r *http.Request) {
+	urlPath := r.URL.Path
+	fmt.Printf("DEBUG: Gauge handler. URL is %s.\n", string(urlPath))
+	matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z0-9]+\/[0-9.-]+$`, urlPath)
+	if matched && (err == nil) {
+		var curMetric storage.Metrics
+		pathSlice := strings.Split(urlPath, "/")
+		curMetric.ID = string(pathSlice[3])
+		curMetric.MType = "gauge"
+		var v float64
+		v, err = strconv.ParseFloat(pathSlice[4], 64)
+		curMetric.Value = &v
+		fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", curMetric.ID, *curMetric.Value)
+		if err == nil {
+			storage.MetStorage.SetMetric(curMetric)
+			//storage.Mstorage.PushGauge(mName, mValue)
+			//fmt.Printf("DEBUG: Mstorage gauges is %v.\n", storage.Mstorage.Gauges)
+			//io.WriteString(w, "DEBUG: Hello from gauge handler (Status OK).\n")
+		} else {
+			io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
+		}
+	} else if (err == nil) && (urlPath == "/update/gauge/") {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		//fmt.Printf("DEBUG: URL is %s.\n", r.URL.Path)
+		//io.WriteString(w, "DEBUG: Hello from gauge handler (Status Not Found). \n")
+	} else {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		//fmt.Printf("INFO: URL is : %s.\n", r.URL.Path)
+		//io.WriteString(w, "DEBUG: Hello from gauge handler (Bad Request). \n")
+	}
+}
+
 // Handler for updating counter value
 func CountersHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
@@ -81,9 +115,10 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
 		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
-		_, ok := storage.Mstorage.Gauges[curMetricName]
-		if ok {
-			curMetricValue := storage.Mstorage.PopGauge(curMetricName)
+		//_, ok := storage.Mstorage.Gauges[curMetricName]
+		curMetric := storage.MetStorage.GetMetric(curMetricName, "gagues")
+		if curMetric != storage.NilMetric {
+			curMetricValue := curMetric.Value
 			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
 			io.WriteString(w, fmt.Sprintf("%v", curMetricValue))
 		} else {
@@ -111,7 +146,7 @@ func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//Handler for getting all current metric values
+// Handler for getting all current metric values
 func GetAllMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	//	urlPath := r.URL.Path
 	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
