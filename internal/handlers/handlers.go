@@ -116,7 +116,7 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 		curMetricName := chi.URLParam(r, "MetricName")
 		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
 		//_, ok := storage.Mstorage.Gauges[curMetricName]
-		curMetric := storage.MetStorage.GetMetric(curMetricName, "gagues")
+		curMetric := storage.MetStorage.GetMetric(curMetricName, "gauge")
 		if curMetric != storage.NilMetric {
 			curMetricValue := curMetric.Value
 			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)

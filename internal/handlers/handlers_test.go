@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"alerting/internal/storage"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -275,7 +278,7 @@ func TestGetGaugeHandler(t *testing.T) {
 			want: want{
 				contentType: "application/json",
 				code:        200,
-				response:    `{"status":"ok"}`,
+				response:    `{"status":"1ok"}`,
 			},
 		},
 	}
@@ -285,17 +288,25 @@ func TestGetGaugeHandler(t *testing.T) {
 			storage.MetStorage.SetMetric(tt.testMetric)
 			getReq := httptest.NewRequest(http.MethodPost, tt.getRequest, nil)
 			w := httptest.NewRecorder()
-			hGet := http.HandlerFunc(GetGaugeHandler) // get the metric by request
-			hGet.ServeHTTP(w, getReq)
-			res := w.Result()
-			_, err := io.ReadAll(res.Body)
-			res.Body.Close()
+			router := chi.NewRouter()
+			router.Use(middleware.Logger)
+			router.HandleFunc("/value/gauge/{MetricName}", GetGaugeHandler)
+			router.ServeHTTP(w, getReq)
+			//GetGaugeHandler(w, getReq)
+			resp := w.Result()
+			bodyBytes, err := io.ReadAll(resp.Body)
 			if err != nil {
-				t.Fatal(err)
+				log.Fatal(err)
 			}
+			resp.Body.Close()
 			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
-			if res.StatusCode != tt.want.code {
-				t.Errorf("TEST_ERROR: Expected status code %d, got %d", tt.want.code, res.StatusCode)
+			if resp.StatusCode == tt.want.code {
+				bodyString := string(bodyBytes)
+				if bodyString != tt.want.response {
+					t.Errorf("TEST_ERROR: Expected response %v, got %v", tt.want.response, bodyString)
+				}
+			} else {
+				t.Errorf("TEST_ERROR: Expected status code %d, got %d", tt.want.code, resp.StatusCode)
 			}
 		})
 	}
