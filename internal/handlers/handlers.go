@@ -3,6 +3,7 @@ package handlers
 import (
 	//"alerting/internal"
 	"alerting/internal/storage"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -115,13 +116,19 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
 		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
-		//_, ok := storage.Mstorage.Gauges[curMetricName]
 		curMetric := storage.MetStorage.GetMetric(curMetricName, "gauge")
 		if curMetric != storage.NilMetric {
-			curMetricValue := curMetric.Value
 			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
-			io.WriteString(w, fmt.Sprintf("%v", curMetricValue))
+			w.Header().Set("Content-Type", "application/json")
+			txJson, err := json.Marshal(curMetric)
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			}
+			w.WriteHeader(http.StatusOK)
+			io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
+			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
 		} else {
+			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	}
@@ -140,6 +147,29 @@ func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
 			curMetricValue := storage.Mstorage.PopCounter(curMetricName)
 			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
 			io.WriteString(w, fmt.Sprintf("%v", curMetricValue))
+		} else {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		}
+	}
+}
+
+func GetCounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
+	urlPath := r.URL.Path
+	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
+	matched, err := regexp.MatchString(`\/value\/counter\/[A-Za-z0-9]+`, urlPath)
+	if matched && (err == nil) {
+		curMetricName := chi.URLParam(r, "MetricName")
+		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
+		curMetric := storage.MetStorage.GetMetric(curMetricName, "counter")
+		if curMetric != storage.NilMetric {
+			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
+			w.Header().Set("Content-Type", "application/json")
+			txJson, err := json.Marshal(curMetric)
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			}
+			io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
+			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
 		} else {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}

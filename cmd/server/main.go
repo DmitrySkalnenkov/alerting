@@ -20,7 +20,7 @@ func main() {
 
 	r.HandleFunc("/", handlers.GetAllMetricsHandler)
 	r.HandleFunc("/update/*", hni)
-	r.HandleFunc("/update/gauge/*", handlers.GaugesHandler)
+	r.HandleFunc("/update/gauge/*", handlers.GaugesHandlerAPI2)
 	r.HandleFunc("/update/counter/*", handlers.CountersHandler)
 	r.HandleFunc("/value/gauge/{MetricName}", handlers.GetGaugeHandler)
 	r.HandleFunc("/value/counter/{MetricName}", handlers.GetCounterHandler)
