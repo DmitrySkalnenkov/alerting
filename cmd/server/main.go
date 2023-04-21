@@ -18,12 +18,12 @@ func main() {
 		io.WriteString(w, "Hello from not implemented handler.\n")
 	}
 
-	r.HandleFunc("/", handlers.GetAllMetricsHandler)
+	r.HandleFunc("/", handlers.GetAllMetricsHandlerAPI2)
 	r.HandleFunc("/update/*", hni)
 	r.HandleFunc("/update/gauge/*", handlers.GaugesHandlerAPI2)
-	r.HandleFunc("/update/counter/*", handlers.CountersHandler)
+	r.HandleFunc("/update/counter/*", handlers.CounterHandlerAPI2)
 	r.HandleFunc("/value/gauge/{MetricName}", handlers.GetGaugeHandler)
-	r.HandleFunc("/value/counter/{MetricName}", handlers.GetCounterHandler)
+	r.HandleFunc("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI2)
 
 	http.ListenAndServe("127.0.0.1:8080", r)
 }
