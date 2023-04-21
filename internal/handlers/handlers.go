@@ -22,7 +22,7 @@ import (
 func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	//fmt.Printf("DEBUG: Gauge handler. URL is %s.\n", string(urlPath))
-	matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z0-9]+\/[0-9.-]+$`, urlPath)
+	matched, err := regexp.MatchString(`/update/gauge/[A-Za-z0-9]+/[0-9.-]+$`, urlPath)
 	if matched && (err == nil) {
 		pathSlice := strings.Split(urlPath, "/")
 		mName := string(pathSlice[3])
@@ -51,7 +51,7 @@ func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 func GaugesHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	fmt.Printf("DEBUG: Gauge handler. URL is %s.\n", string(urlPath))
-	matched, err := regexp.MatchString(`\/update\/gauge\/[A-Za-z0-9]+\/[0-9.-]+$`, urlPath)
+	matched, err := regexp.MatchString(`/update/gauge/[A-Za-z0-9]+/[0-9.-]+$`, urlPath)
 	if matched && (err == nil) {
 		var curMetric storage.Metrics
 		pathSlice := strings.Split(urlPath, "/")
@@ -84,7 +84,7 @@ func GaugesHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 func CountersHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	//fmt.Printf("DEBUG: Counter handler. URL is %s.\n", string(urlPath))
-	matched, err := regexp.MatchString(`\/update\/counter\/[A-Za-z0-9]+\/[0-9-]+$`, urlPath)
+	matched, err := regexp.MatchString(`/update/counter/[A-Za-z0-9]+/[0-9-]+$`, urlPath)
 	if matched && (err == nil) {
 		pathSlice := strings.Split(urlPath, "/")
 		mName := string(pathSlice[3])
@@ -138,7 +138,7 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
-	matched, err := regexp.MatchString(`\/value\/counter\/[A-Za-z0-9]+`, urlPath)
+	matched, err := regexp.MatchString(`/value/counter/[A-Za-z0-9]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
 		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Counters)
@@ -156,7 +156,7 @@ func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
 func GetCounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
-	matched, err := regexp.MatchString(`\/value\/counter\/[A-Za-z0-9]+`, urlPath)
+	matched, err := regexp.MatchString(`/value/counter/[A-Za-z0-9]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
 		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
