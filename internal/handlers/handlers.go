@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -35,7 +36,11 @@ func GaugesHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("DEBUG: Mstorage value for gauge metric %v is %v.\n", curMetric.ID, *storage.MetStorage.GetMetric(curMetric.ID, "gauge").Value)
 			//io.WriteString(w, "DEBUG: Hello from gauge handler (Status OK).\n")
 		} else {
-			io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
+			_, err = io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
+			if err != nil {
+				log.Fatal(err)
+			}
+
 		}
 	} else if (err == nil) && (urlPath == "/update/gauge/") {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -65,7 +70,10 @@ func CounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 			storage.MetStorage.SetMetric(curMetric)
 			fmt.Printf("DEBUG: Mstorage value for counter metric %v is %v.\n", curMetric.ID, *storage.MetStorage.GetMetric(curMetric.ID, "counter").Delta)
 		} else {
-			io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
+			_, err = io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	} else if (err == nil) && (urlPath == "/update/counter/") {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -92,7 +100,10 @@ func GetCounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			}
-			io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
+			_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
+			if err != nil {
+				log.Fatal(err)
+			}
 			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
 		} else {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -107,7 +118,10 @@ func GetAllMetricsHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	}
-	io.WriteString(w, fmt.Sprintf("%v", string(txJsonMetricList)))
+	_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJsonMetricList)))
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 //Handler for updating gauge value
@@ -129,7 +143,10 @@ func GaugesHandler(w http.ResponseWriter, r *http.Request) {
 			//fmt.Printf("DEBUG: Mstorage gauges is %v.\n", storage.Mstorage.Gauges)
 			//io.WriteString(w, "DEBUG: Hello from gauge handler (Status OK).\n")
 		} else {
-			io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
+			_, err = io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	} else if (err == nil) && (urlPath == "/update/gauge/") {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -155,9 +172,15 @@ func CountersHandler(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			storage.Mstorage.PushCounter(mName, mValue)
 			//fmt.Printf("DEBUG: Mstorage counter is %v.\n", storage.Mstorage.Counters)
-			io.WriteString(w, "Hello from counter handler (Status OK).\n")
+			_, err = io.WriteString(w, "Hello from counter handler (Status OK).\n")
+			if err != nil {
+				log.Fatal(err)
+			}
 		} else {
-			io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
+			_, err = io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	} else if (err == nil) && (urlPath == "/update/counter/") {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -187,7 +210,10 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			}
 			w.WriteHeader(http.StatusOK)
-			io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
+			_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
+			if err != nil {
+				log.Fatal()
+			}
 			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
 		} else {
 			w.Header().Set("Content-Type", "application/json")

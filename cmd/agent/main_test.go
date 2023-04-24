@@ -343,7 +343,7 @@ func TestMetricSendingAPI2(t *testing.T) {
 		//fmt.Fprintln(rw, "Hello, client")
 	}))
 	defer s.Close()
-	url, err := url.Parse(s.URL)
+	urlString, err := url.Parse(s.URL)
 	if err != nil {
 		t.Error(err)
 	}
@@ -354,8 +354,8 @@ func TestMetricSendingAPI2(t *testing.T) {
 	}{
 		{name: `positive test #1`,
 			fields: fields{
-				IP:     url.Hostname(),
-				Port:   url.Port(),
+				IP:     urlString.Hostname(),
+				Port:   urlString.Port(),
 				Client: s.Client(),
 			},
 			args: args{
