@@ -79,7 +79,7 @@ func TestGaugesHandlerAPI2(t *testing.T) {
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
-			res.Body.Close()
+			log.Fatal(res.Body.Close())
 			if err != nil {
 				t.Errorf("TEST_ERROR: %s:", err)
 			}
@@ -158,7 +158,7 @@ func TestCounterHandlerAPI2(t *testing.T) {
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
-			res.Body.Close()
+			log.Fatal(res.Body.Close())
 			if err != nil {
 				t.Errorf("TEST_ERROR: %s:", err)
 			}
@@ -238,7 +238,7 @@ func TestGaugesHandler(t *testing.T) {
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
-			res.Body.Close()
+			log.Fatal(res.Body.Close())
 			if err != nil {
 				t.Errorf("TEST_ERROR: %s:", err)
 			}
@@ -326,7 +326,7 @@ func TestCountersHandler(t *testing.T) {
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
-			res.Body.Close()
+			log.Fatal(res.Body.Close())
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -401,7 +401,7 @@ func TestGetGaugeHandler(t *testing.T) {
 			fmt.Println(resp.StatusCode)
 			fmt.Println(resp.Header.Get("Content-Type"))
 			fmt.Println(string(bodyBytes))
-			resp.Body.Close()
+			log.Fatal(resp.Body.Close())
 			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
 			if resp.StatusCode == tt.want.code {
 				bodyString := string(bodyBytes)
@@ -476,7 +476,7 @@ func TestGetCounterHandlerAPI2(t *testing.T) {
 			//fmt.Println(resp.StatusCode)
 			//fmt.Println(resp.Header.Get("Content-Type"))
 			//fmt.Println(string(bodyBytes))
-			resp.Body.Close()
+			log.Fatal(resp.Body.Close())
 			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
 			if resp.StatusCode == tt.want.code {
 				bodyString := string(bodyBytes)

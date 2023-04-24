@@ -35,7 +35,6 @@ func (cl Client) metricSending(mA *[29][3]string) {
 }
 
 // Sends metrics to server
-// TODO: add sending JSON metric, curURL -- ?
 func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 	curURL := ""
 	var curMetric storage.Metrics
