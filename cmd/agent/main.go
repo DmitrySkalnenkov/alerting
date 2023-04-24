@@ -109,11 +109,6 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
 	}
-	//reqDump, err := httputil.DumpRequest(request, true)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//fmt.Printf("DEBUG: %v\n", string(reqDump))
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
