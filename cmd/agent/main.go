@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -24,7 +26,10 @@ func (cl Client) metricSending(mA *[29][3]string) {
 	for row := 0; row < len(mA); row++ {
 		if mA[row][0] != "" {
 			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
-			cl.sendRequest(curURL)
+			_, err := cl.sendRequest(curURL)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 }
@@ -56,7 +61,10 @@ func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 
 			}
 			curURL = fmt.Sprintf("http://%s:%s/update/", cl.IP, cl.Port)
-			cl.sendJSONMetric(curURL, curMetric)
+			_, err := cl.sendJSONMetric(curURL, curMetric)
+			if err != nil {
+				log.Fatal()
+			}
 		}
 	}
 }
@@ -74,7 +82,12 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
 	}
-	defer response.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(response.Body)
 	fmt.Printf("Response status code: %s.\n", response.Status)
 	return string(response.Status), nil
 }

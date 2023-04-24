@@ -3,6 +3,7 @@ package main
 import (
 	"alerting/internal/handlers"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -15,7 +16,10 @@ func main() {
 
 	hni := func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
-		io.WriteString(w, "Hello from not implemented handler.\n")
+		_, err := io.WriteString(w, "Hello from not implemented handler.\n")
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	r.HandleFunc("/", handlers.GetAllMetricsHandlerAPI2)
@@ -25,5 +29,6 @@ func main() {
 	r.HandleFunc("/value/gauge/{MetricName}", handlers.GetGaugeHandler)
 	r.HandleFunc("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI2)
 
-	http.ListenAndServe("127.0.0.1:8080", r)
+	log.Fatal(http.ListenAndServe("127.0.0.1:8080", r))
+
 }
