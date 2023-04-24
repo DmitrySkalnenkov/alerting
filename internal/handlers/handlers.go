@@ -78,6 +78,38 @@ func CounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func GetCounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
+	urlPath := r.URL.Path
+	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
+	matched, err := regexp.MatchString(`/value/counter/[A-Za-z0-9]+`, urlPath)
+	if matched && (err == nil) {
+		curMetricName := chi.URLParam(r, "MetricName")
+		curMetric := storage.MetStorage.GetMetric(curMetricName, "counter")
+		if curMetric != storage.NilMetric {
+			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
+			w.Header().Set("Content-Type", "application/json")
+			txJson, err := json.Marshal(curMetric)
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			}
+			io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
+			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
+		} else {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		}
+	}
+}
+
+// Handler for getting all current metric values API2
+func GetAllMetricsHandlerAPI2(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	txJsonMetricList, err := json.Marshal(*storage.MetStorage)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+	}
+	io.WriteString(w, fmt.Sprintf("%v", string(txJsonMetricList)))
+}
+
 //Handler for updating gauge value
 // /update/gauges/<MetricName>/<MetricValue> then status -- OK (200) and save MetricValue into map with key MetricName
 // /update/gauges/ then status -- NotFound (404)
@@ -164,83 +196,44 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Handler for getting counter value
-func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
-	urlPath := r.URL.Path
-	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
-	matched, err := regexp.MatchString(`/value/counter/[A-Za-z0-9]+`, urlPath)
-	if matched && (err == nil) {
-		curMetricName := chi.URLParam(r, "MetricName")
-		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
-		curMetric := storage.MetStorage.GetMetric(curMetricName, "counter")
-		if curMetric != storage.NilMetric {
-			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
-			w.Header().Set("Content-Type", "application/json")
-			txJson, err := json.Marshal(curMetric)
-			if err != nil {
-				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			}
-			w.WriteHeader(http.StatusOK)
-			io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
-			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
-		} else {
-			w.Header().Set("Content-Type", "application/json")
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		}
-	}
-}
+//// Handler for getting counter value
+//func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
+//	urlPath := r.URL.Path
+//	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
+//	matched, err := regexp.MatchString(`/value/counter/[A-Za-z0-9]+`, urlPath)
+//	if matched && (err == nil) {
+//		curMetricName := chi.URLParam(r, "MetricName")
+//		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
+//		curMetric := storage.MetStorage.GetMetric(curMetricName, "counter")
+//		if curMetric != storage.NilMetric {
+//			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
+//			w.Header().Set("Content-Type", "application/json")
+//			txJson, err := json.Marshal(curMetric)
+//			if err != nil {
+//				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+//			}
+//			w.WriteHeader(http.StatusOK)
+//			io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
+//			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
+//		} else {
+//			w.Header().Set("Content-Type", "application/json")
+//			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+//		}
+//	}
+//}
 
-func GetCounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
-	urlPath := r.URL.Path
-	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
-	matched, err := regexp.MatchString(`/value/counter/[A-Za-z0-9]+`, urlPath)
-	if matched && (err == nil) {
-		curMetricName := chi.URLParam(r, "MetricName")
-		curMetric := storage.MetStorage.GetMetric(curMetricName, "counter")
-		if curMetric != storage.NilMetric {
-			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
-			w.Header().Set("Content-Type", "application/json")
-			txJson, err := json.Marshal(curMetric)
-			if err != nil {
-				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			}
-			io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
-			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
-		} else {
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		}
-	}
-}
-
-// Handler for getting all current metric values API2
-func GetAllMetricsHandlerAPI2(w http.ResponseWriter, r *http.Request) {
-	//TODO: Change formant to json
-	for _, curMetric := range *storage.MetStorage {
-		switch curMetric.MType {
-		case "gauge":
-			fmt.Printf("%v - %v\n", curMetric.ID, *curMetric.Value)
-			io.WriteString(w, fmt.Sprintf("%v - %v\n", curMetric.ID, *curMetric.Value))
-		case "counter":
-			fmt.Printf("%v - %v\n", curMetric.ID, *curMetric.Delta)
-			io.WriteString(w, fmt.Sprintf("%v - %v\n", curMetric.ID, *curMetric.Delta))
-		default:
-			fmt.Printf("Wrong metric type")
-		}
-	}
-}
-
-// Handler for getting all current metric values
-func GetAllMetricsHandler(w http.ResponseWriter, r *http.Request) {
-	//	urlPath := r.URL.Path
-	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
-	//fmt.Printf("DEBUG: MemStorage gauges map %v.\n", storage.Mstorage.Gauges)
-	//fmt.Printf("DEBUG: MemStorage counters map is %v.\n", storage.Mstorage.Counters)
-	for mName, mValue := range storage.Mstorage.Gauges {
-		fmt.Printf("%v - %v\n", mName, mValue)
-		io.WriteString(w, fmt.Sprintf("%v - %v\n", mName, mValue))
-	}
-	for mName, mValue := range storage.Mstorage.Counters {
-		fmt.Printf("%v - %v\n", mName, mValue)
-		io.WriteString(w, fmt.Sprintf("%v - %v\n", mName, mValue))
-	}
-}
+//// Handler for getting all current metric values
+//func GetAllMetricsHandler(w http.ResponseWriter, r *http.Request) {
+//	//	urlPath := r.URL.Path
+//	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
+//	//fmt.Printf("DEBUG: MemStorage gauges map %v.\n", storage.Mstorage.Gauges)
+//	//fmt.Printf("DEBUG: MemStorage counters map is %v.\n", storage.Mstorage.Counters)
+//	for mName, mValue := range storage.Mstorage.Gauges {
+//		fmt.Printf("%v - %v\n", mName, mValue)
+//		io.WriteString(w, fmt.Sprintf("%v - %v\n", mName, mValue))
+//	}
+//	for mName, mValue := range storage.Mstorage.Counters {
+//		fmt.Printf("%v - %v\n", mName, mValue)
+//		io.WriteString(w, fmt.Sprintf("%v - %v\n", mName, mValue))
+//	}
+//}

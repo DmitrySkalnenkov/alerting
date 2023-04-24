@@ -29,6 +29,38 @@ func (cl Client) metricSending(mA *[29][3]string) {
 	}
 }
 
+// Sends metrics to server
+// TODO: add sending JSON metric, curURL -- ?
+func (cl Client) metricSendingAPI2(mA *[29][3]string) {
+	curURL := ""
+	var curMetric storage.Metrics
+	for row := 0; row < len(mA); row++ {
+		if mA[row][0] != "" {
+			curMetric.ID = mA[row][0]
+			curMetric.MType = mA[row][1]
+			switch curMetric.MType {
+			case "gauge":
+				v, err := strconv.ParseFloat(mA[row][2], 64)
+				if err != nil {
+					fmt.Printf("ERROR: Error of converting string %v to float64", mA[row][2])
+				}
+				curMetric.Value = storage.PointOf(float64(v))
+			case "counter":
+				d, err := strconv.ParseInt(mA[row][2], 10, 64)
+				if err != nil {
+					fmt.Printf("ERROR: Error of converting string %v to int64", mA[row][2])
+				}
+				curMetric.Delta = storage.PointOf(int64(d))
+			default:
+				fmt.Printf("ERROR: Wrong metric type. It must be `gauge` or `counter`")
+
+			}
+			curURL = fmt.Sprintf("http://%s:%s/update/", cl.IP, cl.Port)
+			cl.sendJSONMetric(curURL, curMetric)
+		}
+	}
+}
+
 // Send request by plain text by POST method
 func (cl Client) sendRequest(curURL string) (string, error) {
 	request, err := http.NewRequest(http.MethodPost, curURL, nil)
@@ -65,6 +97,11 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
 	}
+	//reqDump, err := httputil.DumpRequest(request, true)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//fmt.Printf("DEBUG: %v\n", string(reqDump))
 	defer response.Body.Close()
 	fmt.Printf("Response status code: %s.\n", response.Status)
 	return string(response.Status), nil
