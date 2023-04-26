@@ -398,10 +398,10 @@ func TestGetGaugeHandler(t *testing.T) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			defer resp.Body.Close()
 			fmt.Println(resp.StatusCode)
 			fmt.Println(resp.Header.Get("Content-Type"))
 			fmt.Println(string(bodyBytes))
-			log.Fatal(resp.Body.Close())
 			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
 			if resp.StatusCode == tt.want.code {
 				bodyString := string(bodyBytes)
