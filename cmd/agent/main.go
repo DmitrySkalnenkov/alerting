@@ -99,11 +99,11 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 	}
 	request.Header.Set("Content-Type", "application/json")
 	response, err := cl.Client.Do(request)
-	defer response.Body.Close()
 	if err != nil {
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
 	}
+	defer response.Body.Close()
 
 	fmt.Printf("Response status code: %s.\n", response.Status)
 	return string(response.Status), nil

@@ -79,10 +79,10 @@ func TestGaugesHandlerAPI2(t *testing.T) {
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
-			//log.Fatal(res.Body.Close())
 			if err != nil {
 				t.Errorf("TEST_ERROR: %s:", err)
 			}
+			defer res.Body.Close()
 			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
 			if res.StatusCode != tt.want.code {
 				t.Errorf("TEST_ERROR: Expected status code %d, got %d", tt.want.code, res.StatusCode)
@@ -158,10 +158,10 @@ func TestCounterHandlerAPI2(t *testing.T) {
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
-			//log.Fatal(res.Body.Close())
 			if err != nil {
 				t.Errorf("TEST_ERROR: %s:", err)
 			}
+			defer res.Body.Close()
 			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
 			if res.StatusCode != tt.want.code {
 				t.Errorf("TEST_ERROR: Expected status code %d, got %d", tt.want.code, res.StatusCode)
@@ -238,10 +238,10 @@ func TestGaugesHandler(t *testing.T) {
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
-			//log.Fatal(res.Body.Close())
 			if err != nil {
 				t.Errorf("TEST_ERROR: %s:", err)
 			}
+			defer res.Body.Close()
 			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
 			if res.StatusCode != tt.want.code {
 				t.Errorf("TEST_ERROR: Expected status code %d, got %d", tt.want.code, res.StatusCode)
@@ -326,10 +326,10 @@ func TestCountersHandler(t *testing.T) {
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
-			//log.Fatal(res.Body.Close())
 			if err != nil {
 				t.Fatal(err)
 			}
+			defer res.Body.Close()
 			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
 			if res.StatusCode != tt.want.code {
 				t.Errorf("TEST_ERROR: Expected status code %d, got %d", tt.want.code, res.StatusCode)
@@ -473,6 +473,7 @@ func TestGetCounterHandlerAPI2(t *testing.T) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			defer resp.Body.Close()
 			//fmt.Println(resp.StatusCode)
 			//fmt.Println(resp.Header.Get("Content-Type"))
 			//fmt.Println(string(bodyBytes))

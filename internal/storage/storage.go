@@ -14,7 +14,7 @@ type Metrics struct {
 type MetricsStorage []Metrics
 
 func NewMetricStorage() *MetricsStorage {
-	var M *MetricsStorage = new(MetricsStorage)
+	var M = new(MetricsStorage)
 	return M
 }
 
