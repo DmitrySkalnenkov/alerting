@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -81,12 +80,7 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(response.Body)
+	defer response.Body.Close()
 	fmt.Printf("Response status code: %s.\n", response.Status)
 	return string(response.Status), nil
 }
@@ -105,16 +99,12 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 	}
 	request.Header.Set("Content-Type", "application/json")
 	response, err := cl.Client.Do(request)
+	defer response.Body.Close()
 	if err != nil {
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(response.Body)
+
 	fmt.Printf("Response status code: %s.\n", response.Status)
 	return string(response.Status), nil
 }

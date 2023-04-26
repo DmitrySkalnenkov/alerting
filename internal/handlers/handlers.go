@@ -96,15 +96,15 @@ func GetCounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 		if curMetric != storage.NilMetric {
 			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
 			w.Header().Set("Content-Type", "application/json")
-			txJson, err := json.Marshal(curMetric)
+			txJSON, err := json.Marshal(curMetric)
 			if err != nil {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			}
-			_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
+			_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSON)))
 			if err != nil {
 				log.Fatal(err)
 			}
-			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
+			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJSON))
 		} else {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
@@ -114,11 +114,11 @@ func GetCounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 // Handler for getting all current metric values API2
 func GetAllMetricsHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	txJsonMetricList, err := json.Marshal(*storage.MetStorage)
+	txJSONMetricList, err := json.Marshal(*storage.MetStorage)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	}
-	_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJsonMetricList)))
+	_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSONMetricList)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -205,16 +205,16 @@ func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
 		if curMetric != storage.NilMetric {
 			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
 			w.Header().Set("Content-Type", "application/json")
-			txJson, err := json.Marshal(curMetric)
+			txJSON, err := json.Marshal(curMetric)
 			if err != nil {
 				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			}
 			w.WriteHeader(http.StatusOK)
-			_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
+			_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSON)))
 			if err != nil {
 				log.Fatal()
 			}
-			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
+			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJSON))
 		} else {
 			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)

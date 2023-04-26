@@ -51,8 +51,7 @@ func TestSetMetric(t *testing.T) {
 }
 
 func TestGetMetric(t *testing.T) {
-	var ms MetricsStorage
-	ms = MetricsStorage{
+	var ms MetricsStorage = MetricsStorage{
 		Metrics{ID: "TestMetric1", MType: "gauge", Value: PointOf(123.321)},
 		Metrics{ID: "TestMetric2", MType: "counter", Delta: PointOf(int64(123))},
 	}

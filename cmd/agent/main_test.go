@@ -2,7 +2,6 @@ package main
 
 import (
 	"alerting/internal/storage"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -46,7 +45,7 @@ func TestSendRequest(t *testing.T) {
 	}
 	s := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 	}))
-	log.Fatal(s.Listener.Close())
+	//log.Fatal(s.Listener.Close())
 
 	s.Listener = l
 	defer s.Close()
@@ -118,7 +117,7 @@ func TestSendJSONMetric(t *testing.T) {
 
 	s := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 	}))
-	log.Fatal(s.Listener.Close())
+	//log.Fatal(s.Listener.Close())
 	s.Listener = l
 	defer s.Close()
 	s.Start()
@@ -132,7 +131,7 @@ func TestSendJSONMetric(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := cl.sendJSONMetric(tt.input.url, tt.input.metric)
 			if (res != tt.wantResponse) || (err != nil) {
-				//fmt.Printf("Error mesage is '%s'\n", err)
+				//fmt.Printf("Error message is '%s'\n", err)
 				if !strings.Contains(err.Error(), tt.wantMessage) {
 					t.Errorf("TEST_ERROR: Request is %s, want is %s, but response is %s and error is %s", tt.input.url, tt.wantResponse, string(res), err)
 				}
@@ -158,7 +157,6 @@ func TestMetricSending(t *testing.T) {
 	mArray[2][2] = "3123.0"
 	// Starting of local HTTP server
 	s := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		//fmt.Fprintln(rw, "Hello, client")
 	}))
 	defer s.Close()
 	urlString, err := url.Parse(s.URL)
