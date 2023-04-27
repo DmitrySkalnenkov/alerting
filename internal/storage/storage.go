@@ -35,9 +35,11 @@ func (pm *MetricsStorage) SetMetric(m Metrics) {
 			case `gauge`:
 				(*pm)[i].MType = "gauge"
 				(*pm)[i].Value = m.Value
+				(*pm)[i].Delta = nil
 			case `counter`:
 				(*pm)[i].MType = "counter"
 				(*pm)[i].Delta = m.Delta
+				(*pm)[i].Value = nil
 			}
 			return
 		}
