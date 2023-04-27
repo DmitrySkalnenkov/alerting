@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"alerting/internal/storage"
 	"fmt"
+	"github.com/DmitrySkalnenkov/alerting/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"io"

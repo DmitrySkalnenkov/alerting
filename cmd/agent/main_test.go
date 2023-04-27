@@ -1,7 +1,7 @@
 package main
 
 import (
-	"alerting/internal/storage"
+	"github.com/DmitrySkalnenkov/alerting/internal/storage"
 	"net"
 	"net/http"
 	"net/http/httptest"

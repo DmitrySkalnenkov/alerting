@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	//"alerting/internal"
-	"alerting/internal/storage"
 	"encoding/json"
 	"fmt"
+	//"alerting/internal"
+	"github.com/DmitrySkalnenkov/alerting/internal/storage"
 	"io"
 	"log"
 	"net/http"

@@ -1,13 +1,12 @@
 package main
 
 import (
-	"alerting/internal/handlers"
+	"github.com/DmitrySkalnenkov/alerting/internal/handlers"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"io"
 	"log"
 	"net/http"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {

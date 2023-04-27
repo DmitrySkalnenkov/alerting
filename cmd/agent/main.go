@@ -1,10 +1,10 @@
 package main
 
 import (
-	"alerting/internal/storage"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/DmitrySkalnenkov/alerting/internal/storage"
 	"log"
 	"math/rand"
 	"net/http"
