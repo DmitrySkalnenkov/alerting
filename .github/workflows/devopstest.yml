@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - increment-4
+      - incr4
 
 jobs:
 
