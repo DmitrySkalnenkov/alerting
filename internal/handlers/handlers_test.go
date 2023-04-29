@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/DmitrySkalnenkov/alerting/internal/storage"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/DmitrySkalnenkov/alerting/internal/storage"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 // func GaugesHandlerAPI2(w http.ResponseWriter, r *http.Request) {
@@ -171,7 +172,7 @@ func TestCounterHandlerAPI2(t *testing.T) {
 }
 
 // func GaugesHandler(w http.ResponseWriter, r *http.Request) {
-func TestGaugesHandler(t *testing.T) {
+func TestGaugesHandlerAPI1(t *testing.T) {
 	type want struct {
 		contentType string
 		code        int
@@ -234,7 +235,7 @@ func TestGaugesHandler(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
 
-			h := http.HandlerFunc(GaugesHandler)
+			h := http.HandlerFunc(GaugesHandlerAPI1)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
@@ -251,7 +252,7 @@ func TestGaugesHandler(t *testing.T) {
 }
 
 // func CountersHandler(w http.ResponseWriter, r *http.Request) {
-func TestCountersHandler(t *testing.T) {
+func TestCountersHandlerAPI1(t *testing.T) {
 	type want struct {
 		contentType string
 		code        int
@@ -322,7 +323,7 @@ func TestCountersHandler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(CountersHandler)
+			h := http.HandlerFunc(CountersHandlerAPI1)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
@@ -339,7 +340,7 @@ func TestCountersHandler(t *testing.T) {
 }
 
 // func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
-func TestGetGaugeHandler(t *testing.T) {
+func TestGetGaugeHandlerAPI1(t *testing.T) {
 	type want struct {
 		contentType string
 		code        int
@@ -390,7 +391,7 @@ func TestGetGaugeHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			router := chi.NewRouter()
 			router.Use(middleware.Logger)
-			router.HandleFunc("/value/gauge/{MetricName}", GetGaugeHandler)
+			router.HandleFunc("/value/gauge/{MetricName}", GetGaugeHandlerAPI1)
 			router.ServeHTTP(w, getReq)
 			//GetGaugeHandler(w, getReq)
 			resp := w.Result()

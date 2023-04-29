@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/DmitrySkalnenkov/alerting/internal/handlers"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"io"
 	"log"
 	"net/http"
+
+	"github.com/DmitrySkalnenkov/alerting/internal/handlers"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 	r.HandleFunc("/update/*", hni)
 	r.HandleFunc("/update/gauge/*", handlers.GaugesHandlerAPI2)
 	r.HandleFunc("/update/counter/*", handlers.CounterHandlerAPI2)
-	r.HandleFunc("/value/gauge/{MetricName}", handlers.GetGaugeHandler)
+	r.HandleFunc("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI2)
 	r.HandleFunc("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI2)
 
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", r))
