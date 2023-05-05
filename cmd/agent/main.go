@@ -109,7 +109,7 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 	return string(response.Status), nil
 }
 
-// Get metrics and store them into array (also incremtnt PollCount and get new RandomValue)
+// Get metrics and store them into array (also increment PollCount and get new RandomValue)
 func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) {
 	runtime.ReadMemStats(rtm)
 	*PollCount = *PollCount + 1

@@ -18,7 +18,7 @@ import (
 )
 
 //var MS = storage.NewMetricStorage()
-//TODO: Need to add both API suport for incr3 test passing
+//TODO: Need to add both API support for incr3 test passing
 
 func GaugesHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
@@ -229,23 +229,19 @@ func GetGaugeHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 func GetGaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
-	matched, err := regexp.MatchString(`/value/counter/[A-Za-z0-9]+`, urlPath)
+	matched, err := regexp.MatchString(`/value/gauge/[A-Za-z0-9]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
 		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
-		curMetric := storage.MetStorage.GetMetric(curMetricName, "counter")
+		curMetric := storage.MetStorage.GetMetric(curMetricName, "gauge")
 		if curMetric != storage.NilMetric {
 			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
-			w.Header().Set("Content-Type", "application/json")
-			txJson, err := json.Marshal(curMetric)
-			if err != nil {
-				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			}
+			w.Header().Set("Content-Type", "plain/text")
 			w.WriteHeader(http.StatusOK)
-			io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
-			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
+			io.WriteString(w, fmt.Sprintf("%v", *(curMetric.Value)))
+			fmt.Printf("DEBUG: Value of curMetric  is %v:\n", *(curMetric.Value))
 		} else {
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Type", "plain/text")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	}
@@ -262,16 +258,12 @@ func GetCounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 		curMetric := storage.MetStorage.GetMetric(curMetricName, "counter")
 		if curMetric != storage.NilMetric {
 			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
-			w.Header().Set("Content-Type", "application/json")
-			txJson, err := json.Marshal(curMetric)
-			if err != nil {
-				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			}
+			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusOK)
-			io.WriteString(w, fmt.Sprintf("%v", string(txJson)))
-			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJson))
+			io.WriteString(w, fmt.Sprintf("%v", *(curMetric.Delta)))
+			fmt.Printf("DEBUG: Value of curMetric  is %v:\n", *(curMetric.Delta))
 		} else {
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Type", "text/plain")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	}
