@@ -6,7 +6,10 @@ import (
 )
 
 func TestSetMetric(t *testing.T) {
-	var mStorage MetricsStorage
+	var ms = MetricsStorage{
+		Metrics{ID: "TestMetric1", MType: "gauge", Value: PointOf(123.321)},
+		Metrics{ID: "TestMetric2", MType: "counter", Delta: PointOf(int64(123))},
+	}
 
 	tests := []struct {
 		name  string
@@ -36,15 +39,15 @@ func TestSetMetric(t *testing.T) {
 			want: Metrics{
 				ID:    "TestMetric2",
 				MType: "counter",
-				Delta: PointOf(int64(123)),
+				Delta: PointOf(int64(246)),
 			},
 		},
 	}
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mStorage.SetMetric(tt.input)
-			if !isMetricsEqual(mStorage[i], tt.want) {
-				t.Errorf("TEST_ERROR: Current metric is %v", mStorage[i])
+			ms.SetMetric(tt.input)
+			if !isMetricsEqual(ms[i], tt.want) {
+				t.Errorf("TEST_ERROR: Current metric is %v", ms[i])
 			}
 		})
 	}

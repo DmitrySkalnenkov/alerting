@@ -38,7 +38,7 @@ func (pm *MetricsStorage) SetMetric(m Metrics) {
 				(*pm)[i].Delta = nil
 			case `counter`:
 				(*pm)[i].MType = "counter"
-				(*pm)[i].Delta = m.Delta
+				*(*pm)[i].Delta = *(*pm)[i].Delta + *m.Delta
 				(*pm)[i].Value = nil
 			}
 			return
