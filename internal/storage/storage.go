@@ -11,6 +11,15 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
+func NewMetric() *Metrics {
+	N := new(Metrics)
+	N.ID = ""
+	N.MType = ""
+	N.Value = new(float64)
+	N.Delta = new(int64)
+	return N
+}
+
 type MetricsStorage []Metrics
 
 func NewMetricStorage() *MetricsStorage {
@@ -30,22 +39,22 @@ var NilMetric = Metrics{
 // SetMetric -- Metric setter
 func (pm *MetricsStorage) SetMetric(m Metrics) {
 	for i := 0; i < len(*pm); i++ {
-		if (*pm)[i].ID == m.ID {
+		if (*pm)[i].ID == m.ID && (*pm)[i].MType == m.MType {
 			switch m.MType {
-			case `gauge`:
-				(*pm)[i].MType = "gauge"
+			case "gauge":
 				(*pm)[i].Value = m.Value
-				(*pm)[i].Delta = nil
-			case `counter`:
-				(*pm)[i].MType = "counter"
+				(*pm)[i].Delta = new(int64)
+				return
+			case "counter":
 				*(*pm)[i].Delta = *(*pm)[i].Delta + *m.Delta
-				(*pm)[i].Value = nil
+				(*pm)[i].Value = new(float64)
+				return
 			}
-			return
+		} else if m.ID != "" && (m.MType == "gauge" || m.MType == "counter") {
+			*pm = append(*pm, m)
 		}
+		//fmt.Printf("DEBUG: MetricStorage is %v \n", (*pm))
 	}
-	*pm = append(*pm, m)
-	fmt.Printf("DEBUG: MetricStorage is %v \n", (*pm))
 }
 
 // GetMetric -- metric getter, if no metric return nilMetric
