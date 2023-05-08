@@ -33,12 +33,17 @@ func GaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	//fmt.Printf("DEBUG: Gauge handler. URL is %s.\n", string(urlPath))
 	matched, err := regexp.MatchString(`/update/gauge/[A-Za-z0-9]+/[0-9.-]+$`, urlPath)
 	if matched && (err == nil) {
+		var curMetric storage.Metrics
 		pathSlice := strings.Split(urlPath, "/")
 		mName := string(pathSlice[3])
 		mValue, err := strconv.ParseFloat(pathSlice[4], 64)
-		//fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", mName, mValue)
+		var v float64
+		v, err = strconv.ParseFloat(pathSlice[4], 64)
+		curMetric.Value = &v
+		fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", mName, mValue)
 		if err == nil {
-			storage.Mstorage.PushGauge(mName, mValue)
+			storage.MetStorage.SetMetric(curMetric)
+			//storage.Mstorage.PushGauge(mName, mValue)
 			//fmt.Printf("DEBUG: Mstorage gauges is %v.\n", storage.Mstorage.Gauges)
 			//io.WriteString(w, "DEBUG: Hello from gauge handler (Status OK).\n")
 		} else {
@@ -73,7 +78,6 @@ func GaugeHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", curMetric.ID, *curMetric.Value)
 		if err == nil {
 			storage.MetStorage.SetMetric(curMetric)
-			//storage.Mstorage.PushGauge(mName, mValue)
 			fmt.Printf("DEBUG: Mstorage value for gauge metric %v is %v.\n", curMetric.ID, *storage.MetStorage.GetMetric(curMetric.ID, "gauge").Value)
 			//io.WriteString(w, "DEBUG: Hello from gauge handler (Status OK).\n")
 		} else {
@@ -109,12 +113,16 @@ func CounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	//fmt.Printf("DEBUG: Counter handler. URL is %s.\n", string(urlPath))
 	matched, err := regexp.MatchString(`/update/counter/[A-Za-z0-9]+/[0-9-]+$`, urlPath)
 	if matched && (err == nil) {
+		var curMetric storage.Metrics
 		pathSlice := strings.Split(urlPath, "/")
-		mName := string(pathSlice[3])
-		mValue, err := strconv.ParseInt(pathSlice[4], 10, 64)
+		curMetric.ID = string(pathSlice[3])
+		curMetric.MType = "counter"
+		var d int64
+		d, err = strconv.ParseInt(pathSlice[4], 10, 64)
+		curMetric.Delta = &d
 		//fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", mName, mValue)
 		if err == nil {
-			storage.Mstorage.PushCounter(mName, mValue)
+			storage.MetStorage.SetMetric(curMetric)
 			//fmt.Printf("DEBUG: Mstorage counter is %v.\n", storage.Mstorage.Counters)
 			_, err = io.WriteString(w, "Hello from counter handler (Status OK).\n")
 			if err != nil {
