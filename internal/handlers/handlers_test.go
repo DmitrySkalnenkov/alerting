@@ -76,7 +76,7 @@ func TestGaugesHandlerAPI2(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(GaugesHandlerAPI2)
+			h := http.HandlerFunc(GaugeHandlerAPI2)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
@@ -311,7 +311,7 @@ func TestGaugesHandlerAPI1(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
 
-			h := http.HandlerFunc(GaugesHandlerAPI1)
+			h := http.HandlerFunc(GaugeHandlerAPI1)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
@@ -399,7 +399,7 @@ func TestCountersHandlerAPI1(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(CountersHandlerAPI1)
+			h := http.HandlerFunc(CounterHandlerAPI1)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)

@@ -22,12 +22,12 @@ func main() {
 		}
 	}
 
-	r.HandleFunc("/", handlers.GetAllMetricsHandlerAPI2)
+	r.HandleFunc("/", handlers.GetAllMetricsHandler)
 	r.HandleFunc("/update/*", hni)
-	r.HandleFunc("/update/gauge/*", handlers.GaugesHandlerAPI2)
-	r.HandleFunc("/update/counter/*", handlers.CounterHandlerAPI2)
-	r.HandleFunc("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI2)
-	r.HandleFunc("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI2)
+	r.HandleFunc("/update/gauge/*", handlers.GaugeHandler)
+	r.HandleFunc("/update/counter/*", handlers.CounterHandler)
+	r.HandleFunc("/value/gauge/{MetricName}", handlers.GetGaugeHandler)
+	r.HandleFunc("/value/counter/{MetricName}", handlers.GetCounterHandler)
 
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", r))
 
