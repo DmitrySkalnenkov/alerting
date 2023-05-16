@@ -38,22 +38,25 @@ var NilMetric = Metrics{
 
 // SetMetric -- Metric setter
 func (pm *MetricsStorage) SetMetric(m Metrics) {
-	for i := 0; i < len(*pm); i++ {
-		if (*pm)[i].ID == m.ID && (*pm)[i].MType == m.MType {
-			switch m.MType {
-			case "gauge":
-				(*pm)[i].Value = m.Value
-				(*pm)[i].Delta = new(int64)
-				return
-			case "counter":
-				*(*pm)[i].Delta = *(*pm)[i].Delta + *m.Delta
-				(*pm)[i].Value = new(float64)
-				return
+	if *pm != nil {
+		for i := 0; i < len(*pm); i++ {
+			if (*pm)[i].ID == m.ID && (*pm)[i].MType == m.MType {
+				switch m.MType {
+				case "gauge":
+					(*pm)[i].Value = m.Value
+					(*pm)[i].Delta = new(int64)
+					return
+				case "counter":
+					*(*pm)[i].Delta = *(*pm)[i].Delta + *m.Delta
+					(*pm)[i].Value = new(float64)
+					return
+				}
+			} else if m.ID != "" && (m.MType == "gauge" || m.MType == "counter") {
+				*pm = append(*pm, m)
 			}
-		} else if m.ID != "" && (m.MType == "gauge" || m.MType == "counter") {
-			*pm = append(*pm, m)
 		}
-		//fmt.Printf("DEBUG: MetricStorage is %v \n", (*pm))
+	} else if m.ID != "" && (m.MType == "gauge" || m.MType == "counter") {
+		*pm = append(*pm, m)
 	}
 }
 
