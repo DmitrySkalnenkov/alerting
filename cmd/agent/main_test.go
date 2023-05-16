@@ -41,7 +41,7 @@ func TestSendRequest(t *testing.T) {
 
 	l, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
-		t.Errorf("TEST_ERROR: Test server creating was failed: %s", err)
+		t.Errorf("TEST_ERROR: Test server creating was failed: %v", err)
 	}
 	s := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 	}))
@@ -170,7 +170,7 @@ func TestMetricSending(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error %s", err)
 	}
-	cl.metricSending(&mArray)
+	cl.metricSendingAPI1(&mArray)
 }
 
 func TestGetMetrics(t *testing.T) {

@@ -14,14 +14,44 @@ import (
 	"strings"
 )
 
-func GaugeHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		GaugeHandlerAPI1(w, r)
-	case "POST":
-		GaugeHandlerAPI2(w, r)
+func NotImplementedHandler(w http.ResponseWriter, _ *http.Request) {
+	http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+	_, err := io.WriteString(w, "Hello from not implemented handler.\n")
+	if err != nil {
+		log.Fatal(err)
 	}
 }
+
+// TODO: To fix context timeout error
+func UpdateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" && r.Header.Get("Content-Type") == "application/json" {
+		decoder := json.NewDecoder(r.Body)
+		var curMetric storage.Metrics
+		err := decoder.Decode(&curMetric)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		if curMetric.MType == "gauge" || curMetric.MType == "counter" && curMetric.ID != "" {
+			storage.MetStorage.SetMetric(curMetric)
+			fmt.Printf("DEBUG: Mstorage value for gauge metric %v is %v.\n", curMetric.ID, storage.MetStorage.GetMetric(curMetric.ID, "gauge").Value)
+		} else {
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			//io.WriteString(w, "DEBUG: Hello from gauge handler (Bad Request). \n")
+		}
+	} else {
+		NotImplementedHandler(w, r)
+	}
+}
+
+//func GaugeHandler(w http.ResponseWriter, r *http.Request) {
+//	switch r.Method {
+//	case "GET":
+//		GaugeHandlerAPI1(w, r)
+//	case "POST":
+//		GaugeHandlerAPI2(w, r)
+//	}
+//}
 
 //Handler for updating gauge value
 // /update/gauges/<MetricName>/<MetricValue> then status -- OK (200) and save MetricValue into map with key MetricName
@@ -66,15 +96,22 @@ func GaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 func GaugeHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	fmt.Printf("DEBUG: Gauge handler. URL is %s.\n", string(urlPath))
-	matched, err := regexp.MatchString(`/update/gauge/[A-Za-z0-9]+/[0-9.-]+$`, urlPath)
-	if matched && (err == nil) {
-		curMetric := *storage.NewMetric()
-		pathSlice := strings.Split(urlPath, "/")
-		curMetric.ID = string(pathSlice[3])
-		curMetric.MType = "gauge"
-		var v float64
-		v, err = strconv.ParseFloat(pathSlice[4], 64)
-		*curMetric.Value = v
+	//matched, err := regexp.MatchString(`/update/gauge/[A-Za-z0-9]+/[0-9.-]+$`, urlPath)
+
+	if r.Header.Get("Content-Type") == "application/json" {
+		var curMetric storage.Metrics
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&curMetric)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		//curMetric := *storage.NewMetric()
+		//curMetric.ID = string(pathSlice[3])
+		//curMetric.MType = "gauge"
+		//var v float64
+		//v, err = strconv.ParseFloat(pathSlice[4], 64)
+		//*curMetric.Value = v
 		fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", curMetric.ID, *curMetric.Value)
 		if err == nil {
 			storage.MetStorage.SetMetric(curMetric)
@@ -87,10 +124,6 @@ func GaugeHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 			}
 
 		}
-	} else if (err == nil) && (urlPath == "/update/gauge/") {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		//fmt.Printf("DEBUG: URL is %s.\n", r.URL.Path)
-		//io.WriteString(w, "DEBUG: Hello from gauge handler (Status Not Found). \n")
 	} else {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		//fmt.Printf("INFO: URL is : %s.\n", r.URL.Path)
