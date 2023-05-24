@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+// TODO: Delete tests for GaugeHandlerAPI2 and CounterHandlerAPI2
 // func CounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
 func TestCounterHandlerAPI2(t *testing.T) {
 	type want struct {

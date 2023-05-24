@@ -14,6 +14,49 @@ import (
 	"strings"
 )
 
+// For Not implemented handlers
+func NotImplementedHandler(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+	_, err := io.WriteString(w, "Hello from not implemented handler.\n")
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// TODO: if GET than  API1, if POST than UPDATE handler
+// handler for URL /update
+func UpdateHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		if r.Header.Get("Content-Type") == "application/json" {
+			decoder := json.NewDecoder(r.Body)
+			var curMetric storage.Metrics
+			err := decoder.Decode(&curMetric)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			if curMetric.MType == "gauge" && curMetric.ID != "" {
+				GaugeHandlerAPI2(w, r)
+			} else if curMetric.MType == "counter" && curMetric.ID != "" {
+				CounterHandlerAPI2(w, r)
+			} else {
+				NotImplementedHandler(w, r)
+			}
+		}
+	case "GET":
+		if strings.Contains(r.URL.Path, "/update/gauge/") {
+			GaugeHandlerAPI1(w, r)
+		} else if strings.Contains(r.URL.Path, "/update/counter/") {
+			CounterHandlerAPI1(w, r)
+		} else {
+			NotImplementedHandler(w, r)
+		}
+	default:
+		NotImplementedHandler(w, r)
+	}
+}
+
 func GaugeHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
@@ -23,6 +66,8 @@ func GaugeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//TODO: Make update handler for API2 (universal for gauge and counter)
+//TODO: Refactoring
 //Handler for updating gauge value
 // /update/gauges/<MetricName>/<MetricValue> then status -- OK (200) and save MetricValue into map with key MetricName
 // /update/gauges/ then status -- NotFound (404)
