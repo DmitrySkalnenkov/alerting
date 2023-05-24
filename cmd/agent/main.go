@@ -19,8 +19,8 @@ type Client struct {
 	Client *http.Client
 }
 
-// Sends metrics to server
-func (cl Client) metricSending(mA *[29][3]string) {
+// Sends metrics to server by GET and value of metric in URL -- /update/{gauge|counter}/[MetricName]/[MetricValue]
+func (cl Client) metricSendingAPI1(mA *[29][3]string) {
 	curURL := ""
 	for row := 0; row < len(mA); row++ {
 		if mA[row][0] != "" {
@@ -87,17 +87,19 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 
 // Sends request by POST method with content type "application/json"
 func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error) {
-	txJSON, err := json.Marshal(m)
-	if err != nil {
-		fmt.Printf("ERROR: %s.\n", err)
-		return "", err
-	}
-	request, err := http.NewRequest(http.MethodPost, curURL, bytes.NewBuffer(txJSON))
+	payloadBuf := new(bytes.Buffer)
+	json.NewEncoder(payloadBuf).Encode(m)
+	request, err := http.NewRequest(http.MethodPost, curURL, payloadBuf)
 	if err != nil {
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
 	}
 	request.Header.Set("Content-Type", "application/json")
+	//txJSON, err := json.Marshal(m)
+	//if err != nil {
+	//	fmt.Printf("ERROR: %s.\n", err)
+	//	return "", err
+	//}
 	response, err := cl.Client.Do(request)
 	if err != nil {
 		fmt.Printf("ERROR: %s.\n", err)
@@ -267,7 +269,8 @@ func main() {
 		}
 		if CurTime.Sub(LastReportTime) > 10*time.Second {
 			fmt.Printf("ReportTime: %s.\n", string(LastReportTime.String()))
-			cl.metricSending(&MetricArray)
+			//cl.metricSendingAPI1(&MetricArray)
+			cl.metricSendingAPI2(&MetricArray)
 			LastReportTime = time.Now()
 		}
 	}
