@@ -46,7 +46,7 @@ func TestSetMetric(t *testing.T) {
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ms.SetMetric(tt.input)
-			if !isMetricsEqual(ms[i], tt.want) {
+			if !IsMetricsEqual(ms[i], tt.want) {
 				t.Errorf("TEST_ERROR: Current metric is %v", ms[i])
 			}
 		})
@@ -87,7 +87,7 @@ func TestGetMetric(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			curMetric := ms.GetMetric(tt.input.MetricName, tt.input.MetricType)
-			if !isMetricsEqual(curMetric, tt.want) {
+			if !IsMetricsEqual(curMetric, tt.want) {
 				t.Errorf("TEST_ERROR: Current metric is %v, want is %v ", curMetric, tt.want)
 			}
 		})

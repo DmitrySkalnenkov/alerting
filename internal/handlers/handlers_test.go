@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -13,155 +15,54 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-// TODO: Delete tests for GaugeHandlerAPI2 and CounterHandlerAPI2
-// func CounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
-func TestCounterHandlerAPI2(t *testing.T) {
+func TestUpdateHandler(t *testing.T) {
 	type want struct {
 		contentType string
 		code        int
 		response    string
 	}
 	tests := []struct {
-		name    string
-		request string
-		want    want
+		name         string
+		rURL         string
+		rMethod      string
+		rContentType string
+		rMetricType  string
+		rMetricValue string
+		want         want
 	}{ //Test table
 		{
-			name:    "positive test #1",
-			request: "http://127.0.0.1:8080/update/counter/TestMetric/12421234123",
+			name:         "positive test #1",
+			rURL:         "http://127.0.0.1:8080/update/",
+			rMethod:      "POST",
+			rContentType: "application/json",
+			rMetricType:  "gauge",
+			rMetricValue: "1231.0",
 			want: want{
-				contentType: "text/plain",
+				contentType: "application/json",
 				code:        200,
 				response:    `{"status":"ok"}`,
 			},
 		},
-		{
-			name:    "positive test #2",
-			request: "http://127.0.0.1:8080/update/counter/TestMetric/-232131123",
-			want: want{
-				contentType: "text/plain",
-				code:        200,
-				response:    `{"status":"ok"}`,
-			},
-		},
-		{
-			name:    "null metric name",
-			request: "http://127.0.0.1:8080/update/counter/",
-			want: want{
-				contentType: "text/plain",
-				code:        404,
-				response:    `{"status":"ok"}`,
-			},
-		},
-		{
-			name:    "bad request",
-			request: "http://127.0.0.1:8080/update/counter",
-			want: want{
-				contentType: "text/plain",
-				code:        400,
-				response:    `{"status":"ok"}`,
-			},
-		},
-		{
-			name:    "symbolic value",
-			request: "http://127.0.0.1:8080/counter/gauge/Metric/rqwer",
-			want: want{
-				contentType: "text/plain",
-				code:        400,
-				response:    `{"status":"ok"}`,
-			},
-		},
 	}
-	for _, tt := range tests {
-		// запускаем каждый тест
-		t.Run(tt.name, func(t *testing.T) {
-			storage.MetStorage = storage.NewMetricStorage()
-			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
-			w := httptest.NewRecorder()
-			h := http.HandlerFunc(CounterHandlerAPI2)
-			h.ServeHTTP(w, req)
-			res := w.Result()
-			_, err := io.ReadAll(res.Body)
-			if err != nil {
-				t.Errorf("TEST_ERROR: %s:", err)
-			}
-			defer res.Body.Close()
-			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
-			if res.StatusCode != tt.want.code {
-				t.Errorf("TEST_ERROR: Expected status code %d, got %d", tt.want.code, res.StatusCode)
-			}
-		})
-	}
-}
 
-// func GaugesHandlerAPI2(w http.ResponseWriter, r *http.Request) {
-func TestGaugeHandlerAPI2(t *testing.T) {
-	type want struct {
-		contentType string
-		code        int
-		response    string
-	}
-	tests := []struct {
-		name    string
-		request string
-		want    want
-	}{ //Test table
-		{
-			name:    "positive test #1",
-			request: "http://127.0.0.1:8080/update/gauge/TestMetric/12421234123.0",
-			want: want{
-				contentType: "text/plain",
-				code:        200,
-				response:    `{"status":"ok"}`,
-			},
-		},
-		{
-			name:    "positive test #2",
-			request: "http://127.0.0.1:8080/update/gauge/TestMetric/-232131123.0",
-			want: want{
-				contentType: "text/plain",
-				code:        200,
-				response:    `{"status":"ok"}`,
-			},
-		},
-		{
-			name:    "null metric name",
-			request: "http://127.0.0.1:8080/update/gauge/",
-			want: want{
-				contentType: "text/plain",
-				code:        404,
-				response:    `{"status":"ok"}`,
-			},
-		},
-		{
-			name:    "bad request",
-			request: "http://127.0.0.1:8080/update/gauge",
-			want: want{
-				contentType: "text/plain",
-				code:        400,
-				response:    `{"status":"ok"}`,
-			},
-		},
-		{
-			name:    "symbolic value",
-			request: "http://127.0.0.1:8080/update/gauge/Metric/rqwer",
-			want: want{
-				contentType: "text/plain",
-				code:        400,
-				response:    `{"status":"ok"}`,
-			},
-		},
-	}
 	for _, tt := range tests {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
 			storage.MetStorage = storage.NewMetricStorage()
-			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
+			rBody, err := json.Marshal(map[string]string{
+				"id":    "TestMetric1",
+				"type":  "gauge",
+				"value": "123.0",
+			})
+			if err != nil {
+				t.Errorf("TEST_ERROR: %s:", err)
+			}
+			req := httptest.NewRequest(tt.rMethod, tt.rURL, bytes.NewBuffer(rBody))
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(GaugeHandlerAPI2)
+			h := http.HandlerFunc(UpdateHandler)
 			h.ServeHTTP(w, req)
 			res := w.Result()
-			_, err := io.ReadAll(res.Body)
+			_, err = io.ReadAll(res.Body)
 			if err != nil {
 				t.Errorf("TEST_ERROR: %s:", err)
 			}
@@ -172,6 +73,7 @@ func TestGaugeHandlerAPI2(t *testing.T) {
 			}
 		})
 	}
+
 }
 
 func TestGetCounterHandlerAPI2(t *testing.T) {

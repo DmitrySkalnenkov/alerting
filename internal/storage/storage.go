@@ -72,7 +72,7 @@ func (pm *MetricsStorage) GetMetric(metricID string, metricType string) Metrics 
 }
 
 // Comparing metric if them equal then true
-func isMetricsEqual(m1 Metrics, m2 Metrics) (res bool) {
+func IsMetricsEqual(m1 Metrics, m2 Metrics) (res bool) {
 	if m1.ID == m2.ID && m1.MType == m2.MType {
 		if m1.Value != nil && m2.Value != nil {
 			if *m1.Value == *m2.Value {
