@@ -22,21 +22,29 @@ func TestUpdateHandler(t *testing.T) {
 		response    string
 	}
 	tests := []struct {
-		name         string
-		rURL         string
-		rMethod      string
-		rContentType string
-		rMetricType  string
-		rMetricValue string
-		want         want
+		name      string
+		reqURL    string
+		reqMetric storage.Metrics
+		want      want
 	}{ //Test table
 		{
-			name:         "positive test #1",
-			rURL:         "http://127.0.0.1:8080/update/",
-			rMethod:      "POST",
-			rContentType: "application/json",
-			rMetricType:  "gauge",
-			rMetricValue: "1231.0",
+			name:   "positive test gauge",
+			reqURL: "http://127.0.0.1:8080/update/",
+			reqMetric: storage.Metrics{
+				ID:    "TestMetric1",
+				MType: "gauge",
+				Delta: nil,
+				Value: storage.PointOf(1233.0),
+			},
+			want: want{
+				contentType: "application/json",
+				code:        200,
+				response:    `{"status":"ok"}`,
+			},
+		},
+		{
+			name:   "positive test counter",
+			reqURL: "http://127.0.0.1:8080/update/",
 			want: want{
 				contentType: "application/json",
 				code:        200,
@@ -49,15 +57,18 @@ func TestUpdateHandler(t *testing.T) {
 		// запускаем каждый тест
 		t.Run(tt.name, func(t *testing.T) {
 			storage.MetStorage = storage.NewMetricStorage()
-			rBody, err := json.Marshal(map[string]string{
-				"id":    "TestMetric1",
-				"type":  "gauge",
-				"value": "123.0",
-			})
-			if err != nil {
-				t.Errorf("TEST_ERROR: %s:", err)
-			}
-			req := httptest.NewRequest(tt.rMethod, tt.rURL, bytes.NewBuffer(rBody))
+
+			rBody := json.Marshal(tt.reqMetric)
+
+			//rBody, err := json.Marshal(map[string]string{
+			//	"id":    "TestMetric1",
+			//	"type":  "gauge",
+			//	"value": "123.0",
+			//})
+			//if err != nil {
+			//	t.Errorf("TEST_ERROR: %s:", err)
+			//}
+			req := httptest.NewRequest("POST", tt.reqURL, bytes.NewBuffer(rBody))
 			w := httptest.NewRecorder()
 			h := http.HandlerFunc(UpdateHandler)
 			h.ServeHTTP(w, req)
@@ -74,160 +85,6 @@ func TestUpdateHandler(t *testing.T) {
 		})
 	}
 
-}
-
-func TestGetCounterHandlerAPI2(t *testing.T) {
-	type want struct {
-		contentType string
-		code        int
-		response    string
-	}
-	tests := []struct {
-		name       string
-		testMetric storage.Metrics
-		getRequest string
-		want       want
-	}{ //Test table
-		{
-			name:       "positive test #1",
-			testMetric: storage.Metrics{ID: "TestMetric1", MType: "counter", Delta: storage.PointOf(int64(123))},
-			getRequest: "http://127.0.0.1:8080/value/counter/TestMetric1",
-			want: want{
-				contentType: "application/json",
-				code:        200,
-				response:    `{"id":"TestMetric1","type":"counter","delta":123}`,
-			},
-		},
-		{
-			name:       "positive test #2",
-			testMetric: storage.Metrics{ID: "TestMetric2", MType: "counter", Delta: storage.PointOf(int64(-321))},
-			getRequest: "http://127.0.0.1:8080/value/counter/TestMetric2",
-			want: want{
-				contentType: "application/json",
-				code:        200,
-				response:    `{"id":"TestMetric2","type":"counter","delta":-321}`,
-			},
-		},
-		{
-			name:       "metric not found test",
-			testMetric: storage.Metrics{ID: "TestMetric2", MType: "counter", Delta: storage.PointOf(int64(1111))},
-			getRequest: "http://127.0.0.1:8080/value/counter/TestMetric3",
-			want: want{
-				contentType: "text/plain",
-				code:        404,
-				response:    http.StatusText(http.StatusNotFound) + "\n",
-			},
-		},
-	}
-	for _, tt := range tests {
-		// запускаем каждый тест
-		t.Run(tt.name, func(t *testing.T) {
-			storage.MetStorage = storage.NewMetricStorage()
-			storage.MetStorage.SetMetric(tt.testMetric)
-			getReq := httptest.NewRequest(http.MethodPost, tt.getRequest, nil)
-			w := httptest.NewRecorder()
-			router := chi.NewRouter()
-			router.Use(middleware.Logger)
-			router.HandleFunc("/value/counter/{MetricName}", GetCounterHandlerAPI2)
-			router.ServeHTTP(w, getReq)
-			resp := w.Result()
-			bodyBytes, err := io.ReadAll(resp.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer resp.Body.Close()
-			//fmt.Println(resp.StatusCode)
-			//fmt.Println(resp.Header.Get("Content-Type"))
-			//fmt.Println(string(bodyBytes))
-			//log.Fatal(resp.Body.Close())
-			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
-			if resp.StatusCode == tt.want.code {
-				bodyString := string(bodyBytes)
-				if bodyString != tt.want.response {
-					t.Errorf("TEST_ERROR: Expected response %v, got %v", tt.want.response, bodyString)
-				}
-			} else {
-				t.Errorf("TEST_ERROR: Expected status code %d, got %d", tt.want.code, resp.StatusCode)
-			}
-		})
-	}
-}
-
-func TestGetGaugeHandlerAPI2(t *testing.T) {
-	type want struct {
-		contentType string
-		code        int
-		response    string
-	}
-	tests := []struct {
-		name       string
-		testMetric storage.Metrics
-		getRequest string
-		want       want
-	}{ //Test table
-		{
-			name:       "positive test #1",
-			testMetric: storage.Metrics{ID: "TestMetric1", MType: "gauge", Value: storage.PointOf(123.0)},
-			getRequest: "http://127.0.0.1:8080/value/gauge/TestMetric1",
-			want: want{
-				contentType: "application/json",
-				code:        200,
-				response:    `{"id":"TestMetric1","type":"gauge","value":123}`,
-			},
-		},
-		{
-			name:       "positive test #2",
-			testMetric: storage.Metrics{ID: "TestMetric2", MType: "gauge", Value: storage.PointOf(-321.0)},
-			getRequest: "http://127.0.0.1:8080/value/gauge/TestMetric2",
-			want: want{
-				contentType: "application/json",
-				code:        200,
-				response:    `{"id":"TestMetric2","type":"gauge","value":-321}`,
-			},
-		},
-		{
-			name:       "metric not found test",
-			testMetric: storage.Metrics{ID: "TestMetric2", MType: "gauge", Value: storage.PointOf(1111.0)},
-			getRequest: "http://127.0.0.1:8080/value/gauge/TestMetric3",
-			want: want{
-				contentType: "text/plain",
-				code:        404,
-				response:    http.StatusText(http.StatusNotFound) + "\n",
-			},
-		},
-	}
-	for _, tt := range tests {
-		// запускаем каждый тест
-		t.Run(tt.name, func(t *testing.T) {
-			storage.MetStorage = storage.NewMetricStorage()
-			storage.MetStorage.SetMetric(tt.testMetric)
-			getReq := httptest.NewRequest(http.MethodPost, tt.getRequest, nil)
-			w := httptest.NewRecorder()
-			router := chi.NewRouter()
-			router.Use(middleware.Logger)
-			router.HandleFunc("/value/gauge/{MetricName}", GetGaugeHandlerAPI2)
-			router.ServeHTTP(w, getReq)
-			resp := w.Result()
-			bodyBytes, err := io.ReadAll(resp.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer resp.Body.Close()
-			//fmt.Println(resp.StatusCode)
-			//fmt.Println(resp.Header.Get("Content-Type"))
-			//fmt.Println(string(bodyBytes))
-			//log.Fatal(resp.Body.Close())
-			//fmt.Printf("TEST_DEBUG: Status is %s, status code is %d, body is %s. \n", res.Status, res.StatusCode, string(resBody))
-			if resp.StatusCode == tt.want.code {
-				bodyString := string(bodyBytes)
-				if bodyString != tt.want.response {
-					t.Errorf("TEST_ERROR: Expected response %v, got %v", tt.want.response, bodyString)
-				}
-			} else {
-				t.Errorf("TEST_ERROR: Expected status code %d, got %d", tt.want.code, resp.StatusCode)
-			}
-		})
-	}
 }
 
 // func GaugesHandler(w http.ResponseWriter, r *http.Request) {

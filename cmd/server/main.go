@@ -20,14 +20,11 @@ func main() {
 	//}
 	//TODO: Change HandleFunc to Get or Post func
 	r.HandleFunc("/", handlers.GetAllMetricsHandler)
-	r.HandleFunc("/update/*", handlers.UpdateHandler)
+	r.Post("/update/*", handlers.UpdateHandler)
 	r.Post("/value/*", handlers.ValueHandler)
-	//r.HandleFunc("/update/gauge/*", handlers.GaugeHandlerAPI1)
-	//r.HandleFunc("/update/counter/*", handlers.CounterHandler)
+	r.Get("/update/gauge/*", handlers.GaugeHandlerAPI1)
+	r.Get("/update/counter/*", handlers.CounterHandlerAPI1)
 	r.Get("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI1)
-	//r.HandleFunc("/value/gauge/{MetricName}", handlers.GetGaugeHandler)
 	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
-
 	log.Fatal(http.ListenAndServe("127.0.0.1:8080", r))
-
 }

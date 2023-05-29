@@ -27,88 +27,61 @@ func NotImplementedHandler(w http.ResponseWriter, r *http.Request) {
 
 // handler for URL /update/ (GET or POST)
 func UpdateHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "POST":
-		if r.Header.Get("Content-Type") == "application/json" {
-			decoder := json.NewDecoder(r.Body)
-			var curMetric storage.Metrics
-			err := decoder.Decode(&curMetric)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			if (curMetric.MType == "gauge" || curMetric.MType == "counter") && curMetric.ID != "" {
-				fmt.Printf("DEBUG: Metric %v was stored into the storage.\n", curMetric)
-				storage.MetStorage.SetMetric(curMetric)
-			} else {
-				NotImplementedHandler(w, r)
-			}
+	if r.Header.Get("Content-Type") == "application/json" {
+		decoder := json.NewDecoder(r.Body)
+		var curMetric storage.Metrics
+		err := decoder.Decode(&curMetric)
+		if err != nil {
+			log.Println(err)
+			return
 		}
-	case "GET":
-		if strings.Contains(r.URL.Path, "/update/gauge/") {
-			GaugeHandlerAPI1(w, r)
-		} else if strings.Contains(r.URL.Path, "/update/counter/") {
-			CounterHandlerAPI1(w, r)
+		if (curMetric.MType == "gauge" || curMetric.MType == "counter") && curMetric.ID != "" {
+			fmt.Printf("DEBUG: Metric %v was stored into the storage.\n", curMetric)
+			storage.MetStorage.SetMetric(curMetric)
 		} else {
 			NotImplementedHandler(w, r)
 		}
-	default:
-		NotImplementedHandler(w, r)
 	}
 }
 
 // handeler for URL /value/ (GET or POST)
 func ValueHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "POST":
-		if r.Header.Get("Content-Type") == "application/json" {
-			decoder := json.NewDecoder(r.Body)
-			var curMetric storage.Metrics
-			err := decoder.Decode(&curMetric)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			if (curMetric.MType == "gauge" || curMetric.MType == "counter") && curMetric.ID != "" {
-				fmt.Printf("DEBUG: Get metric struct from request %v.\n", curMetric)
-				m := storage.MetStorage.GetMetric(curMetric.ID, curMetric.MType)
-				if !storage.IsMetricsEqual(m, storage.NilMetric) {
-					switch curMetric.MType {
-					case "gauge":
-						curMetric.Value = m.Value
-					case "counter":
-						curMetric.Delta = m.Delta
-					}
-					w.Header().Set("Content-Type", "application/json")
-					txJSON, err := json.Marshal(curMetric)
-					if err != nil {
-						http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-					}
-					w.WriteHeader(http.StatusOK)
-					_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSON)))
-					if err != nil {
-						log.Fatal()
-					}
-				} else {
-					w.Header().Set("Content-Type", "application/json")
-					http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	if r.Header.Get("Content-Type") == "application/json" {
+		decoder := json.NewDecoder(r.Body)
+		var curMetric storage.Metrics
+		err := decoder.Decode(&curMetric)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		if (curMetric.MType == "gauge" || curMetric.MType == "counter") && curMetric.ID != "" {
+			fmt.Printf("DEBUG: Get metric struct from request %v.\n", curMetric)
+			m := storage.MetStorage.GetMetric(curMetric.ID, curMetric.MType)
+			if !storage.IsMetricsEqual(m, storage.NilMetric) {
+				switch curMetric.MType {
+				case "gauge":
+					curMetric.Value = m.Value
+				case "counter":
+					curMetric.Delta = m.Delta
+				}
+				w.Header().Set("Content-Type", "application/json")
+				txJSON, err := json.Marshal(curMetric)
+				if err != nil {
+					http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				}
+				w.WriteHeader(http.StatusOK)
+				_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSON)))
+				if err != nil {
+					log.Fatal()
 				}
 			} else {
-				fmt.Printf("DEBUG: Metric is not found in the storage. %v", curMetric)
+				w.Header().Set("Content-Type", "application/json")
+				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			}
 		} else {
-			NotImplementedHandler(w, r)
+			fmt.Printf("DEBUG: Metric is not found in the storage. %v", curMetric)
 		}
-	case "GET":
-
-		if strings.Contains(r.URL.Path, "/value/gauge/") {
-			GetGaugeHandlerAPI1(w, r)
-		} else if strings.Contains(r.URL.Path, "/value/counter/") {
-			GetCounterHandlerAPI1(w, r)
-		} else {
-			NotImplementedHandler(w, r)
-		}
-	default:
+	} else {
 		NotImplementedHandler(w, r)
 	}
 }
@@ -190,15 +163,6 @@ func CounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetGaugeHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		GetGaugeHandlerAPI1(w, r)
-	case "POST":
-		GetGaugeHandlerAPI2(w, r)
-	}
-}
-
 // Handler for getting gauge value
 func GetGaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
@@ -221,45 +185,6 @@ func GetGaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TODO: Delete Get for API2
-// Handler for getting gauge value
-func GetGaugeHandlerAPI2(w http.ResponseWriter, r *http.Request) {
-	urlPath := r.URL.Path
-	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
-	matched, err := regexp.MatchString(`/value/gauge/[A-Za-z0-9]+`, urlPath)
-	if matched && (err == nil) {
-		curMetricName := chi.URLParam(r, "MetricName")
-		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
-		curMetric := storage.MetStorage.GetMetric(curMetricName, "gauge")
-		if curMetric != storage.NilMetric {
-			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
-			w.Header().Set("Content-Type", "application/json")
-			txJSON, err := json.Marshal(curMetric)
-			if err != nil {
-				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			}
-			w.WriteHeader(http.StatusOK)
-			_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSON)))
-			if err != nil {
-				log.Fatal()
-			}
-			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJSON))
-		} else {
-			w.Header().Set("Content-Type", "application/json")
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		}
-	}
-}
-
-func GetCounterHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		GetCounterHandlerAPI1(w, r)
-	case "POST":
-		GetCounterHandlerAPI2(w, r)
-	}
-}
-
 // Handler for getting counter value
 func GetCounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
@@ -277,31 +202,6 @@ func GetCounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("DEBUG: Value of curMetric  is %v:\n", *(curMetric.Delta))
 		} else {
 			w.Header().Set("Content-Type", "text/plain")
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		}
-	}
-}
-
-func GetCounterHandlerAPI2(w http.ResponseWriter, r *http.Request) {
-	urlPath := r.URL.Path
-	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
-	matched, err := regexp.MatchString(`/value/counter/[A-Za-z0-9]+`, urlPath)
-	if matched && (err == nil) {
-		curMetricName := chi.URLParam(r, "MetricName")
-		curMetric := storage.MetStorage.GetMetric(curMetricName, "counter")
-		if curMetric != storage.NilMetric {
-			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
-			w.Header().Set("Content-Type", "application/json")
-			txJSON, err := json.Marshal(curMetric)
-			if err != nil {
-				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			}
-			_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSON)))
-			if err != nil {
-				log.Fatal(err)
-			}
-			//fmt.Println("DEBUG: Value of JSON response is %v:", string(txJSON))
-		} else {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	}
