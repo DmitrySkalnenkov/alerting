@@ -41,6 +41,17 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			NotImplementedHandler(w, r)
 		}
+	} else if r.Header.Get("Content-Type") == "plain/text" {
+		urlSliced := strings.Split(r.URL.Path, "/")
+		if urlSliced[1] == "gauge" {
+			GaugeHandlerAPI1(w, r)
+		} else if urlSliced[1] == "counter" {
+			CounterHandlerAPI1(w, r)
+		} else {
+			NotImplementedHandler(w, r)
+		}
+	} else {
+		NotImplementedHandler(w, r)
 	}
 }
 
