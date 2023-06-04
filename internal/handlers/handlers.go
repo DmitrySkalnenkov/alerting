@@ -27,7 +27,8 @@ func NotImplementedHandler(w http.ResponseWriter, r *http.Request) {
 
 // handler for URL /update/ (GET or POST)
 func UpdateHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Header.Get("Content-Type") == "application/json" {
+	urlSliced := strings.Split(r.URL.Path, "/")
+	if len(urlSliced) == 1 && r.Header.Get("Content-Type") == "application/json" {
 		decoder := json.NewDecoder(r.Body)
 		var curMetric storage.Metrics
 		err := decoder.Decode(&curMetric)
@@ -41,15 +42,10 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			NotImplementedHandler(w, r)
 		}
-	} else if r.Header.Get("Content-Type") == "plain/text" {
-		urlSliced := strings.Split(r.URL.Path, "/")
-		if urlSliced[1] == "gauge" {
-			GaugeHandlerAPI1(w, r)
-		} else if urlSliced[1] == "counter" {
-			CounterHandlerAPI1(w, r)
-		} else {
-			NotImplementedHandler(w, r)
-		}
+	} else if urlSliced[2] == "gauge" {
+		GaugeHandlerAPI1(w, r)
+	} else if urlSliced[2] == "counter" {
+		CounterHandlerAPI1(w, r)
 	} else {
 		NotImplementedHandler(w, r)
 	}
