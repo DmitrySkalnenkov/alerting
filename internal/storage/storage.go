@@ -51,10 +51,11 @@ func (pm *MetricsStorage) SetMetric(m Metrics) {
 					(*pm)[i].Value = new(float64)
 					return
 				}
-			} else if m.ID != "" && (m.MType == "gauge" || m.MType == "counter") {
-				*pm = append(*pm, m)
-				return
 			}
+		}
+		if m.ID != "" && (m.MType == "gauge" || m.MType == "counter") {
+			*pm = append(*pm, m)
+			return
 		}
 	} else if m.ID != "" && (m.MType == "gauge" || m.MType == "counter") {
 		*pm = append(*pm, m)
