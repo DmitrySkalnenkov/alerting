@@ -28,7 +28,7 @@ func NotImplementedHandler(w http.ResponseWriter, r *http.Request) {
 // handler for URL /update/ (GET or POST)
 func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	urlSliced := strings.Split(r.URL.Path, "/")
-	if len(urlSliced) == 1 && r.Header.Get("Content-Type") == "application/json" {
+	if r.Header.Get("Content-Type") == "application/json" {
 		decoder := json.NewDecoder(r.Body)
 		var curMetric storage.Metrics
 		err := decoder.Decode(&curMetric)
