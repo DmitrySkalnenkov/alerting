@@ -77,7 +77,9 @@ func (pm *MetricsStorage) GetMetric(metricID string, metricType string) Metrics 
 // Comparing metric if them equal then true
 func IsMetricsEqual(m1 Metrics, m2 Metrics) (res bool) {
 	if m1.ID == m2.ID && m1.MType == m2.MType {
-		if m1.Value != nil && m2.Value != nil {
+		if (m1.Value == nil && m2.Value == nil) || (m1.Delta == nil && m2.Delta == nil) {
+			return true
+		} else if m1.Value != nil && m2.Value != nil {
 			if *m1.Value == *m2.Value {
 				fmt.Printf("DEBUG: Metric1 value is %v, Metric2 value is %v.\n", *m1.Value, *m2.Value)
 				return true
