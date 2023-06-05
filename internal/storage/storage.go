@@ -1,9 +1,5 @@
 package storage
 
-import (
-	"fmt"
-)
-
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
@@ -70,7 +66,7 @@ func (pm *MetricsStorage) GetMetric(metricID string, metricType string) Metrics 
 			return (*pm)[i]
 		}
 	}
-	fmt.Printf("DEBUG: MetricName %v with type %v not found.\n", metricID, metricType)
+	//fmt.Printf("DEBUG: MetricName %v with type %v not found.\n", metricID, metricType)
 	return NilMetric
 }
 
@@ -81,12 +77,12 @@ func IsMetricsEqual(m1 Metrics, m2 Metrics) (res bool) {
 			return true
 		} else if m1.Value != nil && m2.Value != nil {
 			if *m1.Value == *m2.Value {
-				fmt.Printf("DEBUG: Metric1 value is %v, Metric2 value is %v.\n", *m1.Value, *m2.Value)
+				//fmt.Printf("DEBUG: Metric1 value is %v, Metric2 value is %v.\n", *m1.Value, *m2.Value)
 				return true
 			}
 		} else if m1.Delta != nil && m2.Delta != nil {
 			if *m1.Delta == *m2.Delta {
-				fmt.Printf("DEBUG: Metric1 delta is %v, Metric2 delta is %v.\n", *m1.Delta, *m2.Delta)
+				//fmt.Printf("DEBUG: Metric1 delta is %v, Metric2 delta is %v.\n", *m1.Delta, *m2.Delta)
 				return true
 			}
 		}

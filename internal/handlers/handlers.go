@@ -5,6 +5,7 @@ import (
 	"fmt"
 	//"alerting/internal"
 	"github.com/DmitrySkalnenkov/alerting/internal/storage"
+
 	"github.com/go-chi/chi/v5"
 	"io"
 	"log"
@@ -62,31 +63,26 @@ func ValueHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if (curMetric.MType == "gauge" || curMetric.MType == "counter") && curMetric.ID != "" {
-			fmt.Printf("DEBUG: Get metric struct from request %v.\n", curMetric)
+			//fmt.Printf("DEBUG: Get metric struct from request %v.\n", curMetric)
 			m := storage.MetStorage.GetMetric(curMetric.ID, curMetric.MType)
-			if !storage.IsMetricsEqual(m, storage.NilMetric) {
-				switch curMetric.MType {
-				case "gauge":
-					curMetric.Value = m.Value
-				case "counter":
-					curMetric.Delta = m.Delta
-				}
-				w.Header().Set("Content-Type", "application/json")
-				txJSON, err := json.Marshal(curMetric)
-				if err != nil {
-					http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-				}
-				w.WriteHeader(http.StatusOK)
-				_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSON)))
-				if err != nil {
-					log.Fatal()
-				}
-			} else {
-				w.Header().Set("Content-Type", "application/json")
-				http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			switch curMetric.MType {
+			case "gauge":
+				curMetric.Value = m.Value
+			case "counter":
+				curMetric.Delta = m.Delta
+			}
+			w.Header().Set("Content-Type", "application/json")
+			txJSON, err := json.Marshal(curMetric)
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			}
+			w.WriteHeader(http.StatusOK)
+			_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSON)))
+			if err != nil {
+				log.Fatal()
 			}
 		} else {
-			fmt.Printf("DEBUG: Metric is not found in the storage. %v", curMetric)
+			NotImplementedHandler(w, r)
 		}
 	} else {
 		NotImplementedHandler(w, r)
