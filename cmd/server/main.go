@@ -20,7 +20,7 @@ func main() {
 	//}
 	//TODO: Change HandleFunc to Get or Post func
 	r.HandleFunc("/", handlers.GetAllMetricsHandler)
-	r.Post("/update/*", handlers.UpdateHandler)
+	r.Post("/update/", handlers.UpdateHandler)
 	r.Post("/value/", handlers.ValueHandler)
 	r.Get("/update/gauge/*", handlers.GaugeHandlerAPI1)
 	r.Get("/update/counter/*", handlers.CounterHandlerAPI1)
