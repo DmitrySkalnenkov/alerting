@@ -3,10 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
+
 	//"alerting/internal"
 	"github.com/DmitrySkalnenkov/alerting/internal/storage"
-
-	"github.com/go-chi/chi/v5"
 	"io"
 	"log"
 	"net/http"
@@ -65,21 +65,27 @@ func ValueHandler(w http.ResponseWriter, r *http.Request) {
 		if (curMetric.MType == "gauge" || curMetric.MType == "counter") && curMetric.ID != "" {
 			//fmt.Printf("DEBUG: Get metric struct from request %v.\n", curMetric)
 			m := storage.MetStorage.GetMetric(curMetric.ID, curMetric.MType)
-			switch curMetric.MType {
-			case "gauge":
-				curMetric.Value = m.Value
-			case "counter":
-				curMetric.Delta = m.Delta
-			}
-			w.Header().Set("Content-Type", "application/json")
-			txJSON, err := json.Marshal(curMetric)
-			if err != nil {
-				http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			}
-			w.WriteHeader(http.StatusOK)
-			_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSON)))
-			if err != nil {
-				log.Fatal()
+			if !storage.IsMetricsEqual(m, storage.NilMetric) {
+				switch curMetric.MType {
+				case "gauge":
+					curMetric.Value = m.Value
+				case "counter":
+					curMetric.Delta = m.Delta
+				}
+				w.Header().Set("Content-Type", "application/json")
+				txJSON, err := json.Marshal(curMetric)
+				if err != nil {
+					http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+				}
+				w.WriteHeader(http.StatusOK)
+				_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSON)))
+				if err != nil {
+					log.Fatal()
+				}
+			} else {
+				//w.Header().Set("Content-Type", "plain/json")
+				w.WriteHeader(http.StatusNotFound)
+				_, err = io.WriteString(w, fmt.Sprintf("Metric with ID %v and type %v is not found.", curMetric.ID, curMetric.MType))
 			}
 		} else {
 			NotImplementedHandler(w, r)
@@ -182,7 +188,7 @@ func GetGaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 			io.WriteString(w, fmt.Sprintf("%v", *(curMetric.Value)))
 			fmt.Printf("DEBUG: Value of curMetric  is %v:\n", *(curMetric.Value))
 		} else {
-			w.Header().Set("Content-Type", "plain/text")
+			//w.Header().Set("Content-Type", "plain/text")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	}
@@ -199,12 +205,12 @@ func GetCounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 		curMetric := storage.MetStorage.GetMetric(curMetricName, "counter")
 		if curMetric != storage.NilMetric {
 			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
-			w.Header().Set("Content-Type", "text/plain")
+			//w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusOK)
 			io.WriteString(w, fmt.Sprintf("%v", *(curMetric.Delta)))
 			fmt.Printf("DEBUG: Value of curMetric  is %v:\n", *(curMetric.Delta))
 		} else {
-			w.Header().Set("Content-Type", "text/plain")
+			//w.Header().Set("Content-Type", "text/plain")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	}
