@@ -38,6 +38,7 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if (curMetric.MType == "gauge" || curMetric.MType == "counter") && curMetric.ID != "" {
+			w.WriteHeader(http.StatusOK)
 			fmt.Printf("DEBUG: Metric %v was stored into the storage.\n", curMetric)
 			storage.MetStorage.SetMetric(curMetric)
 		} else {
@@ -113,11 +114,13 @@ func GaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 		*curMetric.Value = v
 		fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", curMetric.ID, *curMetric.Value)
 		if err == nil {
+			w.WriteHeader(http.StatusOK)
 			storage.MetStorage.SetMetric(curMetric)
 			//storage.Mstorage.PushGauge(mName, mValue)
 			//fmt.Printf("DEBUG: Mstorage gauges is %v.\n", storage.Mstorage.Gauges)
 			//io.WriteString(w, "DEBUG: Hello from gauge handler (Status OK).\n")
 		} else {
+			w.WriteHeader(http.StatusMethodNotAllowed)
 			_, err = io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
 			if err != nil {
 				log.Fatal(err)
@@ -149,6 +152,7 @@ func CounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 		*curMetric.Delta = d
 		//fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", curMetric.ID, *curMetric.Delta)
 		if err == nil {
+			w.WriteHeader(http.StatusOK)
 			storage.MetStorage.SetMetric(curMetric)
 			//fmt.Printf("DEBUG: Mstorage counter is %v.\n", storage.Mstorage.Counters)
 			_, err = io.WriteString(w, "Hello from counter handler (Status OK).\n")
@@ -156,6 +160,7 @@ func CounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 		} else {
+			w.WriteHeader(http.StatusMethodNotAllowed)
 			_, err = io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
 			if err != nil {
 				log.Fatal(err)
