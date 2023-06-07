@@ -31,5 +31,5 @@ func main() {
 	r.Post("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
 	r.Get("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI1)
 	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
-	log.Fatal(http.ListenAndServe("127.0.0.1:8080", r))
+	log.Fatal(http.ListenAndServe(`:8080`, r))
 }

@@ -25,6 +25,7 @@ func (cl Client) metricSendingAPI1(mA *[29][3]string) {
 	for row := 0; row < len(mA); row++ {
 		if mA[row][0] != "" {
 			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
+			fmt.Printf("SendingRequest by GET method: http://%s:%s/update/%s/%s/%s \n", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
 			_, err := cl.sendRequest(curURL)
 			if err != nil {
 				log.Fatal(err)
@@ -59,6 +60,8 @@ func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 
 			}
 			curURL = fmt.Sprintf("http://%s:%s/update/", cl.IP, cl.Port)
+			fmt.Printf("DEBUG: For sending. curMetric.ID = %v, curMetric.MType = %v, curMetric.Value = %v, curMetric.Delta = %v. \n",
+				curMetric.ID, curMetric.MType, curMetric.Value, curMetric.Delta)
 			_, err := cl.sendJSONMetric(curURL, curMetric)
 			if err != nil {
 				log.Fatal()
@@ -67,10 +70,10 @@ func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 	}
 }
 
-// Send request by plain text by POST method
+// Send request by plain text by GET method
 func (cl Client) sendRequest(curURL string) (string, error) {
-	request, err := http.NewRequest(http.MethodPost, curURL, nil)
-	request.Header.Set("Content-Type", "text/plain")
+	request, err := http.NewRequest(http.MethodGet, curURL, nil)
+	//request.Header.Set("Content-Type", "text/plain")
 	if err != nil {
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
@@ -90,6 +93,7 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 	payloadBuf := new(bytes.Buffer)
 	json.NewEncoder(payloadBuf).Encode(m)
 	request, err := http.NewRequest(http.MethodPost, curURL, payloadBuf)
+	fmt.Printf("DEBUG: request is %v.\n", request)
 	if err != nil {
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
@@ -102,11 +106,10 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 	//}
 	response, err := cl.Client.Do(request)
 	if err != nil {
-		fmt.Printf("ERROR: %s.\n", err)
+		fmt.Printf("ERROR: Error value is  %v. Response is  %v \n", err, response)
 		return "", err
 	}
 	defer response.Body.Close()
-
 	fmt.Printf("Response status code: %s.\n", response.Status)
 	return string(response.Status), nil
 }
@@ -245,6 +248,7 @@ func main() {
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
 	serverIPAddress := "127.0.0.1"
+	//serverIPAddress := "localhost"
 	serverTCPPort := 8080
 	baseURL := fmt.Sprintf("http://%s:%s", serverIPAddress, strconv.Itoa(serverTCPPort))
 	fmt.Println(baseURL)
@@ -257,20 +261,22 @@ func main() {
 	cl.IP = serverIPAddress
 	cl.Port = strconv.Itoa(serverTCPPort)
 	cl.Client = &http.Client{}
-	cl.Client.Timeout = 100 * time.Millisecond
-
+	cl.Client.Timeout = 10 * time.Second
+	transport := &http.Transport{}
+	transport.MaxIdleConns = 20
+	cl.Client.Transport = transport
 	for {
 		time.Sleep(100 * time.Millisecond)
 		CurTime = time.Now()
-		if CurTime.Sub(LastPoolTime) > 2*time.Second {
+		if CurTime.Sub(LastPoolTime) > 1*time.Second {
 			fmt.Printf("PoolTime: %s.\n", string(LastPoolTime.String()))
 			getMetrics(&MetricArray, &PollCount, &rtm)
 			LastPoolTime = time.Now()
 		}
-		if CurTime.Sub(LastReportTime) > 10*time.Second {
+		if CurTime.Sub(LastReportTime) > 5*time.Second {
 			fmt.Printf("ReportTime: %s.\n", string(LastReportTime.String()))
-			//cl.metricSendingAPI1(&MetricArray)
-			cl.metricSendingAPI2(&MetricArray)
+			cl.metricSendingAPI1(&MetricArray)
+			//cl.metricSendingAPI2(&MetricArray)
 			LastReportTime = time.Now()
 		}
 	}
