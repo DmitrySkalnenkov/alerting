@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/DmitrySkalnenkov/alerting/internal/storage"
-	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -28,7 +27,7 @@ func (cl Client) metricSendingAPI1(mA *[29][3]string) {
 			fmt.Printf("SendingRequest by GET method: http://%s:%s/update/%s/%s/%s \n", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
 			_, err := cl.sendRequest(curURL)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Printf("ERROR: %v. \n", err)
 			}
 		}
 	}
@@ -64,7 +63,7 @@ func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 				curMetric.ID, curMetric.MType, curMetric.Value, curMetric.Delta)
 			_, err := cl.sendJSONMetric(curURL, curMetric)
 			if err != nil {
-				log.Fatal()
+				fmt.Printf("ERROR: %v.\n", err)
 			}
 		}
 	}
@@ -110,6 +109,7 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 		return "", err
 	}
 	defer response.Body.Close()
+
 	fmt.Printf("Response status code: %s.\n", response.Status)
 	return string(response.Status), nil
 }
@@ -247,6 +247,8 @@ func main() {
 	var CurTime time.Time
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
+	pollInterval := 2 * time.Second
+	reportInterval := 10 * time.Second
 	serverIPAddress := "127.0.0.1"
 	//serverIPAddress := "localhost"
 	serverTCPPort := 8080
@@ -256,26 +258,26 @@ func main() {
 	var PollCount int64
 	var rtm runtime.MemStats
 	var MetricArray [29][3]string
-
 	var cl Client
 	cl.IP = serverIPAddress
 	cl.Port = strconv.Itoa(serverTCPPort)
 	cl.Client = &http.Client{}
-	cl.Client.Timeout = 10 * time.Second
+	cl.Client.Timeout = 1 * time.Second
 	transport := &http.Transport{}
 	transport.MaxIdleConns = 20
+	transport.IdleConnTimeout = 1 * time.Second
 	cl.Client.Transport = transport
 	for {
-		time.Sleep(100 * time.Millisecond)
 		CurTime = time.Now()
-		if CurTime.Sub(LastPoolTime) > 1*time.Second {
+		if CurTime.Sub(LastPoolTime) > pollInterval {
 			fmt.Printf("PoolTime: %s.\n", string(LastPoolTime.String()))
 			getMetrics(&MetricArray, &PollCount, &rtm)
 			LastPoolTime = time.Now()
 		}
-		if CurTime.Sub(LastReportTime) > 5*time.Second {
+		if CurTime.Sub(LastReportTime) > reportInterval {
 			fmt.Printf("ReportTime: %s.\n", string(LastReportTime.String()))
 			cl.metricSendingAPI1(&MetricArray)
+			PollCount = 0
 			//cl.metricSendingAPI2(&MetricArray)
 			LastReportTime = time.Now()
 		}

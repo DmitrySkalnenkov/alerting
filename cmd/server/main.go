@@ -6,9 +6,11 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
+	//time.Sleep(500 * time.Millisecond)
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	//hni := func(w http.ResponseWriter, r *http.Request) {
@@ -18,7 +20,6 @@ func main() {
 	//		log.Fatal(err)
 	//	}
 	//}
-	//TODO: Change HandleFunc to Get or Post func
 	r.HandleFunc("/", handlers.GetAllMetricsHandler)
 	r.Post("/update/", handlers.UpdateHandler)
 	r.Post("/value/", handlers.ValueHandler)
@@ -31,5 +32,11 @@ func main() {
 	r.Post("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
 	r.Get("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI1)
 	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
-	log.Fatal(http.ListenAndServe(`:8080`, r))
+	s := &http.Server{
+		Addr:         ":8080",
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+	}
+	s.Handler = r
+	log.Fatal(s.ListenAndServe())
 }

@@ -81,12 +81,15 @@ func ValueHandler(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err = io.WriteString(w, fmt.Sprintf("%v", string(txJSON)))
 				if err != nil {
-					log.Fatal()
+					log.Fatal(err)
 				}
 			} else {
 				//w.Header().Set("Content-Type", "plain/json")
 				w.WriteHeader(http.StatusNotFound)
 				_, err = io.WriteString(w, fmt.Sprintf("Metric with ID %v and type %v is not found.", curMetric.ID, curMetric.MType))
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 		} else {
 			NotImplementedHandler(w, r)
@@ -194,6 +197,8 @@ func GetGaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 			fmt.Printf("DEBUG: Value of curMetric  is %v:\n", *(curMetric.Value))
 		} else {
 			//w.Header().Set("Content-Type", "plain/text")
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Printf("DEBUG: Value of curMetric  is not found")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	}
