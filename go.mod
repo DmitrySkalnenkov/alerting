@@ -1,4 +1,4 @@
-module alerting
+module github.com/DmitrySkalnenkov/alerting
 
 go 1.19
 

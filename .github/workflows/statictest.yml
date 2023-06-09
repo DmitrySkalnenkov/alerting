@@ -5,8 +5,7 @@ on:
   push:
     branches:
       - main
-      - increment-4
-
+      - iter4
 jobs:
 
   statictest:

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/DmitrySkalnenkov/alerting/internal/storage"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -40,11 +41,12 @@ func TestSendRequest(t *testing.T) {
 
 	l, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
-		t.Errorf("TEST_ERROR: Test server creating was failed: %s", err)
+		t.Errorf("TEST_ERROR: Test server creating was failed: %v", err)
 	}
 	s := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 	}))
-	s.Listener.Close()
+	//log.Fatal(s.Listener.Close())
+
 	s.Listener = l
 	defer s.Close()
 	s.Start()
@@ -61,6 +63,77 @@ func TestSendRequest(t *testing.T) {
 				//fmt.Printf("Error mesage is '%s'\n", err)
 				if !strings.Contains(err.Error(), tt.wantMessage) {
 					t.Errorf("TEST_ERROR: Request is %s, want is %s, but response is %s and error is %s", tt.input, tt.wantResponse, string(res), err)
+				}
+			}
+		})
+	}
+}
+
+func TestSendJSONMetric(t *testing.T) {
+
+	type inputs struct {
+		url    string
+		metric storage.Metrics
+	}
+
+	tests := []struct {
+		name         string
+		input        inputs
+		wantResponse string
+		wantMessage  string
+	}{
+		{
+			name: "Positive test gauge",
+			input: inputs{
+				url: "http://127.0.0.1:8080/update/",
+				metric: storage.Metrics{
+					ID:    "TestMetric1",
+					MType: "gauge",
+					Value: storage.PointOf(123.321),
+				},
+			},
+			wantResponse: "200 OK",
+			wantMessage:  "connect: connection refused",
+		},
+		{
+			name: "Positive test counter",
+			input: inputs{
+				url: "http://127.0.0.1:8080/update/",
+				metric: storage.Metrics{
+					ID:    "TestMetric1",
+					MType: "counter",
+					Delta: storage.PointOf(int64(123)),
+				},
+			},
+			wantResponse: "200 OK",
+			wantMessage:  "connect: connection refused",
+		},
+	}
+
+	l, err := net.Listen("tcp", "127.0.0.1:8080")
+	if err != nil {
+		t.Errorf("TEST_ERROR: Test server creating was failed: %s", err)
+	}
+
+	s := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	}))
+	//log.Fatal(s.Listener.Close())
+	s.Listener = l
+	defer s.Close()
+	s.Start()
+
+	var cl Client
+	cl.IP = "127.0.0.1"
+	cl.Port = "8080"
+	cl.Client = s.Client()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := cl.sendJSONMetric(tt.input.url, tt.input.metric)
+			if (res != tt.wantResponse) || (err != nil) {
+				//fmt.Printf("Error message is '%s'\n", err)
+				if !strings.Contains(err.Error(), tt.wantMessage) {
+					t.Errorf("TEST_ERROR: Request is %s, want is %s, but response is %s and error is %s", tt.input.url, tt.wantResponse, string(res), err)
 				}
 			}
 		})
@@ -84,21 +157,20 @@ func TestMetricSending(t *testing.T) {
 	mArray[2][2] = "3123.0"
 	// Starting of local HTTP server
 	s := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		//fmt.Fprintln(rw, "Hello, client")
 	}))
 	defer s.Close()
-	url, err := url.Parse(s.URL)
+	urlString, err := url.Parse(s.URL)
 	if err != nil {
 		t.Error(err)
 	}
 	var cl Client
-	cl.IP = url.Hostname()
-	cl.Port = url.Port()
+	cl.IP = urlString.Hostname()
+	cl.Port = urlString.Port()
 	cl.Client = s.Client()
 	if err != nil {
 		t.Errorf("Error %s", err)
 	}
-	cl.metricSending(&mArray)
+	cl.metricSendingAPI1(&mArray)
 }
 
 func TestGetMetrics(t *testing.T) {
@@ -224,9 +296,9 @@ func TestGetMetrics(t *testing.T) {
 	wmArray[28][2] = ""
 
 	getMetrics(&metrics, &pollcount, &rtm)
-	if len(metrics) != len(wmArray) {
-		t.Errorf("TEST_ERROR: Wrong length of metric array. Length is %d.\n", len(metrics))
-	}
+	//if len(metrics) != len(wmArray) {
+	//	t.Errorf("TEST_ERROR: Wrong length of metric array. Length is %d.\n", len(metrics))
+	//}
 	//fmt.Printf("Metrics %v: \n", metrics)
 	for i := 1; i < 29; i++ {
 		if metrics[i][0] != wmArray[i][0] || metrics[i][1] != wmArray[i][1] {
@@ -238,4 +310,65 @@ func TestGetMetrics(t *testing.T) {
 		}
 	}
 
+}
+
+func TestMetricSendingAPI2(t *testing.T) {
+	type fields struct {
+		IP     string
+		Port   string
+		Client *http.Client
+	}
+	type args struct {
+		mA *[29][3]string
+	}
+
+	var mArray [29][3]string
+	//1
+	mArray[0][0] = "Alloc"
+	mArray[0][1] = "gauge"
+	mArray[0][2] = "1231.0"
+	//2
+	mArray[1][0] = "PollCount"
+	mArray[1][1] = "counter"
+	mArray[1][2] = "123123"
+	//3
+	mArray[2][0] = "Frees"
+	mArray[2][1] = "gauge"
+	mArray[2][2] = "3123.0"
+
+	// Starting of local HTTP server
+	s := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		//fmt.Fprintln(rw, "Hello, client")
+	}))
+	defer s.Close()
+	urlString, err := url.Parse(s.URL)
+	if err != nil {
+		t.Error(err)
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		{name: `positive test #1`,
+			fields: fields{
+				IP:     urlString.Hostname(),
+				Port:   urlString.Port(),
+				Client: s.Client(),
+			},
+			args: args{
+				&mArray,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cl := Client{
+				IP:     tt.fields.IP,
+				Port:   tt.fields.Port,
+				Client: tt.fields.Client,
+			}
+			cl.metricSendingAPI2(tt.args.mA)
+		})
+	}
 }

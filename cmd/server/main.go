@@ -1,29 +1,42 @@
 package main
 
 import (
-	"alerting/internal/handlers"
-	"io"
-	"net/http"
-
+	"github.com/DmitrySkalnenkov/alerting/internal/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"log"
+	"net/http"
+	"time"
 )
 
 func main() {
+	//time.Sleep(500 * time.Millisecond)
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-
-	hni := func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
-		io.WriteString(w, "Hello from not implemented handler.\n")
-	}
-
+	//hni := func(w http.ResponseWriter, r *http.Request) {
+	//	http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+	//	_, err := io.WriteString(w, "Hello from not implemented handler.\n")
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//}
 	r.HandleFunc("/", handlers.GetAllMetricsHandler)
-	r.HandleFunc("/update/*", hni)
-	r.HandleFunc("/update/gauge/*", handlers.GaugesHandler)
-	r.HandleFunc("/update/counter/*", handlers.CountersHandler)
-	r.HandleFunc("/value/gauge/{MetricName}", handlers.GetGaugeHandler)
-	r.HandleFunc("/value/counter/{MetricName}", handlers.GetCounterHandler)
-
-	http.ListenAndServe("127.0.0.1:8080", r)
+	r.Post("/update/", handlers.UpdateHandler)
+	r.Post("/value/", handlers.ValueHandler)
+	r.Get("/update/gauge/*", handlers.GaugeHandlerAPI1)
+	r.Get("/update/counter/*", handlers.CounterHandlerAPI1)
+	r.Post("/update/gauge/*", handlers.GaugeHandlerAPI1)
+	r.Post("/update/counter/*", handlers.CounterHandlerAPI1)
+	r.Post("/update/*", handlers.NotImplementedHandler)
+	r.Post("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI1)
+	r.Post("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
+	r.Get("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI1)
+	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
+	s := &http.Server{
+		Addr:         ":8080",
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+	}
+	s.Handler = r
+	log.Fatal(s.ListenAndServe())
 }

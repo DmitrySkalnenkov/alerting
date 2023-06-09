@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"github.com/DmitrySkalnenkov/alerting/internal/storage"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -15,19 +18,61 @@ type Client struct {
 	Client *http.Client
 }
 
-func (cl Client) metricSending(mA *[29][3]string) {
+// Sends metrics to server by GET and value of metric in URL -- /update/{gauge|counter}/[MetricName]/[MetricValue]
+func (cl Client) metricSendingAPI1(mA *[29][3]string) {
 	curURL := ""
 	for row := 0; row < len(mA); row++ {
 		if mA[row][0] != "" {
 			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
-			cl.sendRequest(curURL)
+			fmt.Printf("SendingRequest by GET method: http://%s:%s/update/%s/%s/%s \n", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
+			_, err := cl.sendRequest(curURL)
+			if err != nil {
+				fmt.Printf("ERROR: %v. \n", err)
+			}
 		}
 	}
 }
 
+// Sends metrics to server
+func (cl Client) metricSendingAPI2(mA *[29][3]string) {
+	curURL := ""
+	var curMetric storage.Metrics
+	for row := 0; row < len(mA); row++ {
+		if mA[row][0] != "" {
+			curMetric.ID = mA[row][0]
+			curMetric.MType = mA[row][1]
+			switch curMetric.MType {
+			case "gauge":
+				v, err := strconv.ParseFloat(mA[row][2], 64)
+				if err != nil {
+					fmt.Printf("ERROR: Error of converting string %v to float64", mA[row][2])
+				}
+				curMetric.Value = storage.PointOf(float64(v))
+			case "counter":
+				d, err := strconv.ParseInt(mA[row][2], 10, 64)
+				if err != nil {
+					fmt.Printf("ERROR: Error of converting string %v to int64", mA[row][2])
+				}
+				curMetric.Delta = storage.PointOf(int64(d))
+			default:
+				fmt.Printf("ERROR: Wrong metric type. It must be `gauge` or `counter`")
+
+			}
+			curURL = fmt.Sprintf("http://%s:%s/update/", cl.IP, cl.Port)
+			fmt.Printf("DEBUG: For sending. curMetric.ID = %v, curMetric.MType = %v, curMetric.Value = %v, curMetric.Delta = %v. \n",
+				curMetric.ID, curMetric.MType, curMetric.Value, curMetric.Delta)
+			_, err := cl.sendJSONMetric(curURL, curMetric)
+			if err != nil {
+				fmt.Printf("ERROR: %v.\n", err)
+			}
+		}
+	}
+}
+
+// Send request by plain text by GET method
 func (cl Client) sendRequest(curURL string) (string, error) {
-	request, err := http.NewRequest(http.MethodPost, curURL, nil)
-	request.Header.Set("Content-Type", "text/plain")
+	request, err := http.NewRequest(http.MethodGet, curURL, nil)
+	//request.Header.Set("Content-Type", "text/plain")
 	if err != nil {
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
@@ -42,6 +87,34 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 	return string(response.Status), nil
 }
 
+// Sends request by POST method with content type "application/json"
+func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error) {
+	payloadBuf := new(bytes.Buffer)
+	json.NewEncoder(payloadBuf).Encode(m)
+	request, err := http.NewRequest(http.MethodPost, curURL, payloadBuf)
+	fmt.Printf("DEBUG: request is %v.\n", request)
+	if err != nil {
+		fmt.Printf("ERROR: %s.\n", err)
+		return "", err
+	}
+	request.Header.Set("Content-Type", "application/json")
+	//txJSON, err := json.Marshal(m)
+	//if err != nil {
+	//	fmt.Printf("ERROR: %s.\n", err)
+	//	return "", err
+	//}
+	response, err := cl.Client.Do(request)
+	if err != nil {
+		fmt.Printf("ERROR: Error value is  %v. Response is  %v \n", err, response)
+		return "", err
+	}
+	defer response.Body.Close()
+
+	fmt.Printf("Response status code: %s.\n", response.Status)
+	return string(response.Status), nil
+}
+
+// Get metrics and store them into array (also increment PollCount and get new RandomValue)
 func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) {
 	runtime.ReadMemStats(rtm)
 	*PollCount = *PollCount + 1
@@ -174,7 +247,10 @@ func main() {
 	var CurTime time.Time
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
+	pollInterval := 2 * time.Second
+	reportInterval := 10 * time.Second
 	serverIPAddress := "127.0.0.1"
+	//serverIPAddress := "localhost"
 	serverTCPPort := 8080
 	baseURL := fmt.Sprintf("http://%s:%s", serverIPAddress, strconv.Itoa(serverTCPPort))
 	fmt.Println(baseURL)
@@ -182,24 +258,27 @@ func main() {
 	var PollCount int64
 	var rtm runtime.MemStats
 	var MetricArray [29][3]string
-
 	var cl Client
 	cl.IP = serverIPAddress
 	cl.Port = strconv.Itoa(serverTCPPort)
 	cl.Client = &http.Client{}
-	cl.Client.Timeout = 100 * time.Millisecond
-
+	cl.Client.Timeout = 1 * time.Second
+	transport := &http.Transport{}
+	transport.MaxIdleConns = 20
+	transport.IdleConnTimeout = 1 * time.Second
+	cl.Client.Transport = transport
 	for {
-		time.Sleep(100 * time.Millisecond)
 		CurTime = time.Now()
-		if CurTime.Sub(LastPoolTime) > 2*time.Second {
+		if CurTime.Sub(LastPoolTime) > pollInterval {
 			fmt.Printf("PoolTime: %s.\n", string(LastPoolTime.String()))
 			getMetrics(&MetricArray, &PollCount, &rtm)
 			LastPoolTime = time.Now()
 		}
-		if CurTime.Sub(LastReportTime) > 10*time.Second {
+		if CurTime.Sub(LastReportTime) > reportInterval {
 			fmt.Printf("ReportTime: %s.\n", string(LastReportTime.String()))
-			cl.metricSending(&MetricArray)
+			cl.metricSendingAPI1(&MetricArray)
+			PollCount = 0
+			//cl.metricSendingAPI2(&MetricArray)
 			LastReportTime = time.Now()
 		}
 	}
