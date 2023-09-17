@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/DmitrySkalnenkov/alerting/internal/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"log"
-	"net/http"
-	"time"
 )
 
 func main() {
@@ -32,8 +35,13 @@ func main() {
 	r.Post("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
 	r.Get("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI1)
 	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
+	hostport_str := os.Getenv("ADDRESS")
+	if hostport_str == "" {
+		hostport_str = "127.0.0.1:8080"
+	}
+	fmt.Println(hostport_str)
 	s := &http.Server{
-		Addr:         ":8080",
+		Addr:         hostport_str,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}

@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/DmitrySkalnenkov/alerting/internal/storage"
 	"math/rand"
+	"net"
 	"net/http"
+	"os"
 	"runtime"
 	"strconv"
 	"time"
+
+	"github.com/DmitrySkalnenkov/alerting/internal/storage"
 )
 
 type Client struct {
@@ -247,12 +250,37 @@ func main() {
 	var CurTime time.Time
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
+
+	hostport_string := os.Getenv("ADDRESS")
+	if hostport_string == "" {
+		hostport_string = "127.0.0.1:8080"
+	}
+	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostport_string)
+	if err != nil {
+		fmt.Printf("ADDRESS environment variable is not IP:port format")
+	}
+	//serverIPAddress := "127.0.0.1"
+	//serverTCPPort := 8080
+
 	pollInterval := 2 * time.Second
+	if os.Getenv("POLL_INTERVAL") != "" {
+		pollValue, err := strconv.Atoi(os.Getenv("POLL_INTERVAL"))
+		if err != nil {
+			pollInterval = time.Duration(pollValue) * time.Second
+			fmt.Printf("DEBUG: pollInterval is %s", pollInterval)
+		}
+	}
+
 	reportInterval := 10 * time.Second
-	serverIPAddress := "127.0.0.1"
-	//serverIPAddress := "localhost"
-	serverTCPPort := 8080
-	baseURL := fmt.Sprintf("http://%s:%s", serverIPAddress, strconv.Itoa(serverTCPPort))
+	if os.Getenv("REPORT_INTERVAL") != "" {
+		reportValue, err := strconv.Atoi(os.Getenv("REPORT_INTERVAL"))
+		if err != nil {
+			reportInterval = time.Duration(reportValue) * time.Second
+			fmt.Printf("DEBUG: reportInterval is %s", reportInterval)
+		}
+	}
+
+	baseURL := fmt.Sprintf("http://%s:%s", serverIPAddress, serverTCPPort)
 	fmt.Println(baseURL)
 
 	var PollCount int64
@@ -260,7 +288,7 @@ func main() {
 	var MetricArray [29][3]string
 	var cl Client
 	cl.IP = serverIPAddress
-	cl.Port = strconv.Itoa(serverTCPPort)
+	cl.Port = serverTCPPort
 	cl.Client = &http.Client{}
 	cl.Client.Timeout = 1 * time.Second
 	transport := &http.Transport{}
