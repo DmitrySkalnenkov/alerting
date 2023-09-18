@@ -251,12 +251,12 @@ func main() {
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
 
-	hostport_string := "127.0.0.1:8080"
-	if hostport_string != "" {
-		hostport_string = os.Getenv("ADDRESS")
+	hostportStr := "127.0.0.1:8080"
+	if hostportStr != "" {
+		hostportStr = os.Getenv("ADDRESS")
 
 	}
-	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostport_string)
+	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostportStr)
 	if err != nil {
 		fmt.Printf("ADDRESS environment variable is not IP:port format")
 	}

@@ -35,13 +35,13 @@ func main() {
 	r.Post("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
 	r.Get("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI1)
 	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
-	hostport_str := "127.0.0.1:8080"
-	if hostport_str != "" {
-		hostport_str = os.Getenv("ADDRESS")
+	hostportStr := "127.0.0.1:8080"
+	if hostportStr != "" {
+		hostportStr = os.Getenv("ADDRESS")
 	}
-	fmt.Println(hostport_str)
+	fmt.Println(hostportStr)
 	s := &http.Server{
-		Addr:         hostport_str,
+		Addr:         hostportStr,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
