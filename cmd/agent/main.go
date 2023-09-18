@@ -252,7 +252,7 @@ func main() {
 	LastReportTime := time.Now()
 
 	hostportStr := "127.0.0.1:8080"
-	if hostportStr != "" {
+	if os.Getenv("ADDRESS") != "" {
 		hostportStr = os.Getenv("ADDRESS")
 
 	}
