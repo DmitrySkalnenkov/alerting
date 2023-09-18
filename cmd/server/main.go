@@ -37,7 +37,7 @@ func main() {
 	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
 	hostport_str := "127.0.0.1:8080"
 	if hostport_str != "" {
-		hostport_str := os.Getenv("ADDRESS")
+		hostport_str = os.Getenv("ADDRESS")
 	}
 	fmt.Println(hostport_str)
 	s := &http.Server{
