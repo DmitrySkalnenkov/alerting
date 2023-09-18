@@ -252,13 +252,15 @@ func main() {
 	LastReportTime := time.Now()
 
 	hostportStr := "127.0.0.1:8080"
+
 	if os.Getenv("ADDRESS") != "" {
 		hostportStr = os.Getenv("ADDRESS")
 
 	}
 	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostportStr)
 	if err != nil {
-		fmt.Printf("ADDRESS environment variable is not IP:port format")
+		fmt.Printf("WARNING: ADDRESS environment variable is not IP:port format. Will be used default host and port.")
+		hostportStr = "127.0.0.1:8080"
 	}
 	//serverIPAddress := "127.0.0.1"
 	//serverTCPPort := 8080
