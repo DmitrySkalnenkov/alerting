@@ -251,9 +251,10 @@ func main() {
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
 
-	hostport_string := os.Getenv("ADDRESS")
-	if hostport_string == "" {
-		hostport_string = "127.0.0.1:8080"
+	hostport_string := "127.0.0.1:8080"
+	if hostport_string != "" {
+		hostport_string = os.Getenv("ADDRESS")
+
 	}
 	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostport_string)
 	if err != nil {
@@ -265,23 +266,24 @@ func main() {
 	pollInterval := 2 * time.Second
 	if os.Getenv("POLL_INTERVAL") != "" {
 		pollValue, err := strconv.Atoi(os.Getenv("POLL_INTERVAL"))
-		if err != nil {
+		if err == nil {
 			pollInterval = time.Duration(pollValue) * time.Second
-			fmt.Printf("DEBUG: pollInterval is %s", pollInterval)
 		}
 	}
 
 	reportInterval := 10 * time.Second
 	if os.Getenv("REPORT_INTERVAL") != "" {
 		reportValue, err := strconv.Atoi(os.Getenv("REPORT_INTERVAL"))
-		if err != nil {
+		if err == nil {
 			reportInterval = time.Duration(reportValue) * time.Second
-			fmt.Printf("DEBUG: reportInterval is %s", reportInterval)
 		}
 	}
 
+	fmt.Printf("DEBUG: PollInterval is %s.\n", pollInterval)
+	fmt.Printf("DEBUG: ReportInterval is %s.\n", reportInterval)
+
 	baseURL := fmt.Sprintf("http://%s:%s", serverIPAddress, serverTCPPort)
-	fmt.Println(baseURL)
+	fmt.Printf("DEBUG: BaseURL is %s.\n", baseURL)
 
 	var PollCount int64
 	var rtm runtime.MemStats
