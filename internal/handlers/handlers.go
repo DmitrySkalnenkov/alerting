@@ -3,16 +3,18 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/go-chi/chi/v5"
 
 	//"alerting/internal"
-	"github.com/DmitrySkalnenkov/alerting/internal/storage"
 	"io"
 	"log"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/DmitrySkalnenkov/alerting/internal/storage"
 )
 
 // For Not implemented handlers
@@ -41,6 +43,7 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			fmt.Printf("DEBUG: Metric %v was stored into the storage.\n", curMetric)
 			storage.MetStorage.SetMetric(curMetric)
+
 		} else {
 			NotImplementedHandler(w, r)
 		}

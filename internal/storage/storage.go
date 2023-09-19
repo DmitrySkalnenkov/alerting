@@ -1,10 +1,35 @@
 package storage
 
+import (
+	"fmt"
+	"log"
+	"os"
+	"time"
+)
+
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
 	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+}
+
+type MetricsStorage []Metrics
+
+var MetStorage = NewMetricStorage()
+
+var Msch chan string
+
+var NilMetric = Metrics{
+	ID:    "",
+	MType: "",
+	Delta: nil,
+	Value: nil,
+}
+
+func NewMetricStorage() *MetricsStorage {
+	var M = new(MetricsStorage)
+	return M
 }
 
 func NewMetric() *Metrics {
@@ -14,22 +39,6 @@ func NewMetric() *Metrics {
 	N.Value = new(float64)
 	N.Delta = new(int64)
 	return N
-}
-
-type MetricsStorage []Metrics
-
-func NewMetricStorage() *MetricsStorage {
-	var M = new(MetricsStorage)
-	return M
-}
-
-var MetStorage = NewMetricStorage()
-
-var NilMetric = Metrics{
-	ID:    "",
-	MType: "",
-	Delta: nil,
-	Value: nil,
 }
 
 // SetMetric -- Metric setter
@@ -94,6 +103,46 @@ func IsMetricsEqual(m1 Metrics, m2 Metrics) (res bool) {
 
 func PointOf[T any](value T) *T {
 	return &value
+}
+
+//Update metrics values in channel
+func UpdateStrInChannel(ch chan string) {
+	met := 111
+	for {
+		fmt.Printf("DEBUG: Sent %f to channel.\n", string(met))
+		ch <- string(met)
+		time.Sleep(1 * time.Second)
+	}
+}
+
+//Writing metrics to file metric storage
+/*
+func WriteMetricsToFile(fileStorage *os.File, ch chan int) {
+	ms := <-ch
+	for i := 0; i < 10; i++ {
+		if ms != nil {
+			curMetricString := ""
+			for i := 0; i < len(ms); i++ {
+				curMetricString = fmt.Sprintf("%s", (ms)[i])
+				fmt.Printf("Current metric string %s.", curMetricString)
+				_, err := fileStorage.WriteString(curMetricString)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+		time.Sleep(5 * time.Second)
+	}
+}
+*/
+
+func WriteStringToFile(fileStorage *os.File, ch chan string) {
+	curString := <-ch
+	fmt.Printf("DEBUG: Current metric string %s.", curString)
+	_, err := fileStorage.WriteString(curString)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 //////////legacy//////////
