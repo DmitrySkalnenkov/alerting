@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -106,44 +107,45 @@ func PointOf[T any](value T) *T {
 }
 
 //Update metrics values in channel
-func UpdateStrInChannel(ch chan string) {
-	met := 111
-	for {
-		fmt.Printf("DEBUG: Sent %f to channel.\n", string(met))
-		ch <- string(met)
+func UpdateStrInChannel(ch chan MetricsStorage) {
+	ms := MetStorage
+	for i := 0; ; i++ {
+		ch <- *ms
 		time.Sleep(1 * time.Second)
 	}
 }
 
-//Writing metrics to file metric storage
-/*
-func WriteMetricsToFile(fileStorage *os.File, ch chan int) {
-	ms := <-ch
-	for i := 0; i < 10; i++ {
-		if ms != nil {
-			curMetricString := ""
-			for i := 0; i < len(ms); i++ {
-				curMetricString = fmt.Sprintf("%s", (ms)[i])
-				fmt.Printf("Current metric string %s.", curMetricString)
-				_, err := fileStorage.WriteString(curMetricString)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-		}
-		time.Sleep(5 * time.Second)
+func PrintMetricFromChannel(ch chan MetricsStorage) {
+	for {
+		msg := <-ch
+		fmt.Println(msg)
+		time.Sleep(time.Second * 1)
 	}
 }
-*/
 
-func WriteStringToFile(fileStorage *os.File, ch chan string) {
+//Writing metrics to file metric storage
+
+func WriteMetricsToFile(fileStorage *os.File, ch chan MetricsStorage, st time.Duration) {
+	for {
+		curMetricStorage := <-ch
+		//fmt.Printf("DEBUG: Current metric string is '%s'.\n", curMetricStorage)
+		toFile, _ := json.MarshalIndent(curMetricStorage, "", " ")
+		_, err := fileStorage.Write(toFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		time.Sleep(st)
+	}
+}
+
+/*func WriteStringToFile(fileStorage *os.File, ch chan string) {
 	curString := <-ch
 	fmt.Printf("DEBUG: Current metric string %s.", curString)
 	_, err := fileStorage.WriteString(curString)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
+}*/
 
 //////////legacy//////////
 

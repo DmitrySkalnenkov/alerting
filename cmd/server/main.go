@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	//"strconv"
 	"time"
 
 	"github.com/DmitrySkalnenkov/alerting/internal/handlers"
@@ -47,10 +49,15 @@ func main() {
 	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
 
 	hostportStr := GetEnvVariable("ADDRESS", "127.0.0.1:8080")
-	storeIntervalStr := GetEnvVariable("STORE_INTERVAL", "300")
+	storeIntervalStr := GetEnvVariable("STORE_INTERVAL", "3")
+	storeIntervalStr += "s"
 	storeFilePath := GetEnvVariable("STORE_FILE", "/tmp/devops-metrics-db.json")
 	isRestoreStr := GetEnvVariable("RESTORE", "true")
-	_ = storeIntervalStr
+	storeIntervalTime, err := time.ParseDuration(storeIntervalStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	_ = isRestoreStr
 
 	fileMetircStorage, err := os.OpenFile(storeFilePath, os.O_RDWR|os.O_CREATE, 0777)
@@ -66,8 +73,13 @@ func main() {
 		WriteTimeout: 30 * time.Second,
 	}
 	s.Handler = r
-	go storage.UpdateStrInChannel(storage.Msch)
-	go storage.WriteStringToFile(fileMetircStorage, storage.Msch)
-	log.Fatal(s.ListenAndServe())
 
+	var c chan storage.MetricsStorage = make(chan storage.MetricsStorage)
+
+	go storage.UpdateStrInChannel(c)
+	go storage.WriteMetricsToFile(fileMetircStorage, c, storeIntervalTime)
+
+	log.Fatal(s.ListenAndServe())
+	var input string
+	fmt.Scanln(&input)
 }
