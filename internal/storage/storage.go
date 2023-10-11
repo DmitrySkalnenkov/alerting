@@ -119,7 +119,7 @@ func UpdateMetricsInChannel(ch chan MetricsStorage) {
 // Restore metrics from file in MetStorage
 func RestoreMetricsFromFile(fileStoragePath string, ms *MetricsStorage) {
 	if fileStoragePath != "" {
-		fileMetricStorage, err := os.OpenFile(fileStoragePath, os.O_RDONLY, 0777)
+		fileMetricStorage, err := os.OpenFile(fileStoragePath, os.O_RDONLY|os.O_CREATE, 0777)
 		if err != nil {
 			fmt.Printf("ERROR: Cannot open file '%s'.\n", fileStoragePath)
 			log.Fatal(err)

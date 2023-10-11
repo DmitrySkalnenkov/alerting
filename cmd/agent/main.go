@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/DmitrySkalnenkov/alerting/internal/auxiliary"
 	"github.com/DmitrySkalnenkov/alerting/internal/storage"
 )
 
@@ -251,19 +252,17 @@ func main() {
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
 
-	hostportStr := "127.0.0.1:8080"
+	//hostportStr := "127.0.0.1:8080"
+	hostportStr := auxiliary.GetEnvVariable("ADDRESS", "localhost:8080")
+	hostportStr = auxiliary.TrimQuotes(hostportStr)
 
-	if os.Getenv("ADDRESS") != "" {
-		hostportStr = os.Getenv("ADDRESS")
-
-	}
 	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostportStr)
 	if err != nil {
-		fmt.Printf("WARNING: ADDRESS environment variable is not IP:port format. Will be used default host and port.")
 		hostportStr = "127.0.0.1:8080"
+		fmt.Printf("WARNING: ADDRESS environment variable is not IP:port format. Will be used default host and"+
+			" port (%s).\n", hostportStr)
+
 	}
-	//serverIPAddress := "127.0.0.1"
-	//serverTCPPort := 8080
 
 	pollInterval := 2 * time.Second
 	if os.Getenv("POLL_INTERVAL") != "" {
