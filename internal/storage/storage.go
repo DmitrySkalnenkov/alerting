@@ -128,31 +128,38 @@ func RestoreMetricsFromFile(fileStoragePath string, ms *MetricsStorage) {
 			fmt.Printf("ERROR: Cannot read file '%s'.\n", fileStoragePath)
 			log.Fatal(err)
 		}
-		err = json.Unmarshal(fromFile, ms)
+		var tmp MetricsStorage
+		err = json.Unmarshal(fromFile, &tmp)
 		if err == nil {
 			fmt.Printf("INFO: Metrics from file were restored succesfully.")
+			*ms = tmp
 		} else {
-			fmt.Printf("ERROR: %s ", err)
+			fmt.Printf("ERROR: %s.\n", err)
 		}
 	}
 }
 
 // Writing metrics to file metric storage
-func WriteMetricsToFile(fileStoragePath string, ch chan MetricsStorage, st time.Duration) {
+func WriteMetricsToFile(filePath string, ch chan MetricsStorage, st time.Duration) {
+	fileMetricStorage, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
+	if err != nil {
+		fmt.Printf("ERROR: Cannot open file '%s'.\n", filePath)
+		log.Fatal(err)
+	}
+	defer fileMetricStorage.Close()
 	for {
 		curMetricStorage := <-ch
 		//fmt.Printf("DEBUG: Current metric string is '%s'.\n", curMetricStorage)
 		if len(curMetricStorage) > 0 {
-			fileMetricStorage, err := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
-			if err != nil {
-				fmt.Printf("ERROR: Cannot open file '%s'.\n")
-				log.Fatal(err)
-			}
-			defer fileMetricStorage.Close()
 			toFile, _ := json.Marshal(curMetricStorage)
-			_, err = fileMetricStorage.Write(toFile)
-			if err != nil {
-				log.Fatal(err)
+			fileMetricStorage.Truncate(0)
+			fileMetricStorage.Seek(0, 0)
+			_, err := fileMetricStorage.WriteString(string(toFile))
+			if err == nil {
+				fmt.Printf("INFO: Metrics from the server were dumped to the file.\n")
+			} else {
+				fmt.Printf("ERROR: %s.\n", err)
+				return
 			}
 		}
 		time.Sleep(st)
