@@ -162,7 +162,9 @@ func WriteMetricsToFile(filePath string, ch chan MetricsStorage, st time.Duratio
 				return
 			}
 		}
-		time.Sleep(st)
+		if st != 0 {
+			time.Sleep(st)
+		}
 	}
 }
 

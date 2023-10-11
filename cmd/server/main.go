@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	//"strconv"
@@ -43,11 +45,24 @@ func main() {
 	hostportStr = auxiliary.TrimQuotes(hostportStr)
 	storeIntervalStr := auxiliary.GetEnvVariable("STORE_INTERVAL", "300s")
 	//storeIntervalStr += "s"
-	storeFilePath := auxiliary.GetEnvVariable("STORE_FILE", "/tmp/devops-metrics-db.json")
+	storeFilePath := ""
+
+	valueStoreFilePath, isStoreFilePath := os.LookupEnv("STORE_FILE")
+	if !(isStoreFilePath == true && valueStoreFilePath == "") {
+		storeFilePath = auxiliary.GetEnvVariable("STORE_FILE", "/tmp/devops-metrics-db.json")
+	}
 	isRestoreStr := auxiliary.GetEnvVariable("RESTORE", "true")
-	storeIntervalTime, err := time.ParseDuration(storeIntervalStr)
-	if err != nil {
-		log.Fatal(err)
+
+	storeIntervalTime := 0 * time.Second
+	if storeIntervalStr != "0" {
+		var err error
+		storeIntervalTime, err = time.ParseDuration(storeIntervalStr)
+		if err != nil {
+			fmt.Printf("ERROR: Cannot conver STORE_INTERVAL value (%s) to second. Will be used 0 value. \n",
+				storeIntervalStr)
+			storeIntervalTime = 0 * time.Second
+			return
+		}
 	}
 
 	s := &http.Server{
@@ -61,9 +76,11 @@ func main() {
 	if strings.ToLower(isRestoreStr) == "true" {
 		storage.RestoreMetricsFromFile(storeFilePath, storage.MetStorage)
 	}
-
-	go storage.UpdateMetricsInChannel(c)
-	go storage.WriteMetricsToFile(storeFilePath, c, storeIntervalTime)
+	_ = storeIntervalTime
+	if storeFilePath != "" { // Disabling of storing metrics into the file
+		go storage.UpdateMetricsInChannel(c)
+		go storage.WriteMetricsToFile(storeFilePath, c, storeIntervalTime)
+	}
 
 	log.Fatal(s.ListenAndServe())
 }
