@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -106,8 +107,8 @@ func PointOf[T any](value T) *T {
 	return &value
 }
 
-//Update metrics values in channel
-func UpdateStrInChannel(ch chan MetricsStorage) {
+// Update metrics values in channel
+func UpdateMetricsInChannel(ch chan MetricsStorage) {
 	ms := MetStorage
 	for i := 0; ; i++ {
 		ch <- *ms
@@ -115,24 +116,46 @@ func UpdateStrInChannel(ch chan MetricsStorage) {
 	}
 }
 
-func PrintMetricFromChannel(ch chan MetricsStorage) {
-	for {
-		msg := <-ch
-		fmt.Println(msg)
-		time.Sleep(time.Second * 1)
+// Restore metrics from file in MetStorage
+func RestoreMetricsFromFile(fileStoragePath string, ms *MetricsStorage) {
+	if fileStoragePath != "" {
+		fileMetricStorage, err := os.OpenFile(fileStoragePath, os.O_RDONLY, 0777)
+		if err != nil {
+			fmt.Printf("ERROR: Cannot open file '%s'.\n", fileStoragePath)
+			log.Fatal(err)
+		}
+		defer fileMetricStorage.Close()
+		fromFile, err := io.ReadAll(fileMetricStorage)
+		if err != nil {
+			fmt.Printf("ERROR: Cannot read file '%s'.\n", fileStoragePath)
+			log.Fatal(err)
+		}
+		err = json.Unmarshal(fromFile, ms)
+		if err == nil {
+			fmt.Printf("INFO: Metrics from file were restored succesfully.")
+		} else {
+			fmt.Printf("ERROR: %s ", err)
+		}
 	}
 }
 
-//Writing metrics to file metric storage
-
-func WriteMetricsToFile(fileStorage *os.File, ch chan MetricsStorage, st time.Duration) {
+// Writing metrics to file metric storage
+func WriteMetricsToFile(fileStoragePath string, ch chan MetricsStorage, st time.Duration) {
 	for {
 		curMetricStorage := <-ch
 		//fmt.Printf("DEBUG: Current metric string is '%s'.\n", curMetricStorage)
-		toFile, _ := json.MarshalIndent(curMetricStorage, "", " ")
-		_, err := fileStorage.Write(toFile)
-		if err != nil {
-			log.Fatal(err)
+		if len(curMetricStorage) > 0 {
+			fileMetricStorage, err := os.OpenFile(fileStoragePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
+			if err != nil {
+				fmt.Printf("ERROR: Cannot open file '%s'.\n")
+				log.Fatal(err)
+			}
+			defer fileMetricStorage.Close()
+			toFile, _ := json.Marshal(curMetricStorage)
+			_, err = fileMetricStorage.Write(toFile)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 		time.Sleep(st)
 	}

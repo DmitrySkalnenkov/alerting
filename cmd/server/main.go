@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	//"strconv"
 	"time"
@@ -49,7 +50,7 @@ func main() {
 	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
 
 	hostportStr := GetEnvVariable("ADDRESS", "127.0.0.1:8080")
-	storeIntervalStr := GetEnvVariable("STORE_INTERVAL", "3")
+	storeIntervalStr := GetEnvVariable("STORE_INTERVAL", "300")
 	storeIntervalStr += "s"
 	storeFilePath := GetEnvVariable("STORE_FILE", "/tmp/devops-metrics-db.json")
 	isRestoreStr := GetEnvVariable("RESTORE", "true")
@@ -57,15 +58,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	_ = isRestoreStr
-
-	fileMetircStorage, err := os.OpenFile(storeFilePath, os.O_RDWR|os.O_CREATE, 0777)
-	if err != nil {
-		fmt.Printf("ERROR: Cannot open file '%s'.\n")
-		log.Fatal(err)
-	}
-	defer fileMetircStorage.Close()
 
 	s := &http.Server{
 		Addr:         hostportStr,
@@ -75,9 +67,12 @@ func main() {
 	s.Handler = r
 
 	var c chan storage.MetricsStorage = make(chan storage.MetricsStorage)
+	if strings.ToLower(isRestoreStr) == "true" {
+		storage.RestoreMetricsFromFile(storeFilePath, storage.MetStorage)
+	}
 
-	go storage.UpdateStrInChannel(c)
-	go storage.WriteMetricsToFile(fileMetircStorage, c, storeIntervalTime)
+	go storage.UpdateMetricsInChannel(c)
+	go storage.WriteMetricsToFile(storeFilePath, c, storeIntervalTime)
 
 	log.Fatal(s.ListenAndServe())
 	var input string
