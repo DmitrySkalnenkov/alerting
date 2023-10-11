@@ -94,7 +94,11 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 // Sends request by POST method with content type "application/json"
 func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error) {
 	payloadBuf := new(bytes.Buffer)
-	json.NewEncoder(payloadBuf).Encode(m)
+	err := json.NewEncoder(payloadBuf).Encode(m)
+	if err != nil {
+		fmt.Printf("ERROR: Error value is  %v.\n", err)
+		return "", err
+	}
 	request, err := http.NewRequest(http.MethodPost, curURL, payloadBuf)
 	fmt.Printf("DEBUG: request is %v.\n", request)
 	if err != nil {

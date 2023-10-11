@@ -20,8 +20,6 @@ type MetricsStorage []Metrics
 
 var MetStorage = NewMetricStorage()
 
-var Msch chan string
-
 var NilMetric = Metrics{
 	ID:    "",
 	MType: "",
