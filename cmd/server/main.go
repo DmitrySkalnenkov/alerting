@@ -48,7 +48,7 @@ func main() {
 	storeFilePath := ""
 
 	valueStoreFilePath, isStoreFilePath := os.LookupEnv("STORE_FILE")
-	if !(isStoreFilePath == true && valueStoreFilePath == "") {
+	if !(isStoreFilePath && valueStoreFilePath == "") {
 		storeFilePath = auxiliary.GetEnvVariable("STORE_FILE", "/tmp/devops-metrics-db.json")
 	}
 	isRestoreStr := auxiliary.GetEnvVariable("RESTORE", "true")
