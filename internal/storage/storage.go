@@ -139,6 +139,8 @@ func RestoreMetricsFromFile(fileStoragePath string, ms *MetricsStorage) {
 	}
 }
 
+//TODO: Check synchronization of update and writing from the channel
+
 // Writing metrics to file metric storage
 func WriteMetricsToFile(filePath string, ch chan MetricsStorage, st time.Duration) {
 	fileMetricStorage, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
@@ -167,15 +169,6 @@ func WriteMetricsToFile(filePath string, ch chan MetricsStorage, st time.Duratio
 		}
 	}
 }
-
-/*func WriteStringToFile(fileStorage *os.File, ch chan string) {
-	curString := <-ch
-	fmt.Printf("DEBUG: Current metric string %s.", curString)
-	_, err := fileStorage.WriteString(curString)
-	if err != nil {
-		log.Fatal(err)
-	}
-}*/
 
 //////////legacy//////////
 

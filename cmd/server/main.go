@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	//"strconv"
 	"time"
 
 	"github.com/DmitrySkalnenkov/alerting/internal/auxiliary"
@@ -18,16 +16,9 @@ import (
 )
 
 func main() {
-	//time.Sleep(500 * time.Millisecond)
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	//hni := func(w http.ResponseWriter, r *http.Request) {
-	//	http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
-	//	_, err := io.WriteString(w, "Hello from not implemented handler.\n")
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//}
 	r.HandleFunc("/", handlers.GetAllMetricsHandler)
 	r.Post("/update/", handlers.UpdateHandler)
 	r.Post("/value/", handlers.ValueHandler)
@@ -41,18 +32,24 @@ func main() {
 	r.Get("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI1)
 	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
 
-	hostportStr := auxiliary.GetEnvVariable("ADDRESS", "localhost:8080")
+	//hostportStr := auxiliary.GetEnvVariable("ADDRESS", "localhost:8080")
+	hostportStr := auxiliary.GetParamValue("ADDRESS", "a", "localhost:8080", "ADDRESS should be in 'ip:port' format")
 	hostportStr = auxiliary.TrimQuotes(hostportStr)
-	storeIntervalStr := auxiliary.GetEnvVariable("STORE_INTERVAL", "300s")
+
+	//storeIntervalStr := auxiliary.GetEnvVariable("STORE_INTERVAL", "300s")
 	//storeIntervalStr += "s"
+	storeIntervalStr := auxiliary.GetParamValue("STORE_INTERVAL", "i", "300s", "Store "+
+		"interval should be 0 or <second>s format, default is '300s'.")
 	storeFilePath := ""
 
 	valueStoreFilePath, isStoreFilePath := os.LookupEnv("STORE_FILE")
 	if !(isStoreFilePath && valueStoreFilePath == "") {
-		storeFilePath = auxiliary.GetEnvVariable("STORE_FILE", "/tmp/devops-metrics-db.json")
+		//storeFilePath = auxiliary.GetEnvVariable("STORE_FILE", "/tmp/devops-metrics-db.json")
+		storeFilePath = auxiliary.GetParamValue("STORE_FILE", "f", "/tmp/devops-metrics-db.json", "Store file path should be absolute path "+
+			"to file. If STORE_FILE variable is empty string than storing functionality will not be used.")
 	}
-	isRestoreStr := auxiliary.GetEnvVariable("RESTORE", "true")
-
+	//isRestoreStr := auxiliary.GetEnvVariable("RESTORE", "true")
+	isRestoreStr := auxiliary.GetParamValue("RESTORE", "r", "true", "RESTORE variable or flag 'r' should be 'true' of 'false'.")
 	storeIntervalTime := 0 * time.Second
 	if storeIntervalStr != "0" {
 		var err error
@@ -81,6 +78,5 @@ func main() {
 		go storage.UpdateMetricsInChannel(c)
 		go storage.WriteMetricsToFile(storeFilePath, c, storeIntervalTime)
 	}
-
 	log.Fatal(s.ListenAndServe())
 }

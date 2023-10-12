@@ -257,7 +257,8 @@ func main() {
 	LastReportTime := time.Now()
 
 	//hostportStr := "127.0.0.1:8080"
-	hostportStr := auxiliary.GetEnvVariable("ADDRESS", "localhost:8080")
+	//hostportStr := auxiliary.GetEnvVariable("ADDRESS", "localhost:8080")
+	hostportStr := auxiliary.GetParamValue("ADDRESS", "a", "localhost:8080", "Flag 'a' value should be in 'IP:PORT' format")
 	hostportStr = auxiliary.TrimQuotes(hostportStr)
 
 	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostportStr)
@@ -268,17 +269,23 @@ func main() {
 
 	}
 
-	pollInterval := 2 * time.Second
+	var pollInterval time.Duration
+	//pollInterval := 2 * time.Second
+	pollIntervalStr := auxiliary.GetParamValue("REPORT_INTERVAL", "r", "2",
+		"flag 'r' should be in seconds")
 	if os.Getenv("POLL_INTERVAL") != "" {
-		pollValue, err := strconv.Atoi(os.Getenv("POLL_INTERVAL"))
+		//pollValue, err := strconv.Atoi(os.Getenv("POLL_INTERVAL"))
+		pollValue, err := strconv.Atoi(pollIntervalStr)
 		if err == nil {
 			pollInterval = time.Duration(pollValue) * time.Second
 		}
 	}
-
-	reportInterval := 10 * time.Second
+	var reportInterval time.Duration
+	//reportInterval := 10 * time.Second
+	reportIntervalStr := auxiliary.GetParamValue("POLL_INTERVAL", "p", "10", "flag 'p' should be in seconds")
 	if os.Getenv("REPORT_INTERVAL") != "" {
-		reportValue, err := strconv.Atoi(os.Getenv("REPORT_INTERVAL"))
+		//reportValue, err := strconv.Atoi(os.Getenv("REPORT_INTERVAL"))
+		reportValue, err := strconv.Atoi(reportIntervalStr)
 		if err == nil {
 			reportInterval = time.Duration(reportValue) * time.Second
 		}
