@@ -67,7 +67,8 @@ func main() {
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
-	s.Handler = r
+	//s.Handler = r
+	s.Handler = handlers.GzipHandle(r)
 
 	var c = make(chan storage.MetricsStorage)
 	if strings.ToLower(isRestoreStr) == "true" {
