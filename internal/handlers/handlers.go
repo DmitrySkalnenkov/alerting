@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
 
@@ -28,7 +27,7 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
-// GzipHandle as middleware
+/*// GzipHandle as middleware
 func GzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// проверяем, что клиент поддерживает gzip-сжатие
@@ -48,10 +47,11 @@ func GzipHandle(next http.Handler) http.Handler {
 		defer gz.Close()
 
 		w.Header().Set("Content-Encoding", "gzip")
+
 		// передаём обработчику страницы переменную типа gzipWriter для вывода данных
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 	})
-}
+}*/
 
 // For Not implemented handlers
 func NotImplementedHandler(w http.ResponseWriter, r *http.Request) {

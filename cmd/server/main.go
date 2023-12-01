@@ -19,6 +19,7 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(middleware.Compress(5))
 	r.HandleFunc("/", handlers.GetAllMetricsHandler)
 	r.Post("/update/", handlers.UpdateHandler)
 	r.Post("/value/", handlers.ValueHandler)
@@ -55,7 +56,7 @@ func main() {
 		var err error
 		storeIntervalTime, err = time.ParseDuration(storeIntervalStr)
 		if err != nil {
-			fmt.Printf("ERROR: Cannot conver STORE_INTERVAL value (%s) to second. Will be used 0 value. \n",
+			fmt.Printf("ERROR: Cannot conver STORE_INTERVAL value (%s) to time. Will be used 0 value. \n",
 				storeIntervalStr)
 			storeIntervalTime = 0 * time.Second
 			return
@@ -67,8 +68,8 @@ func main() {
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
-	//s.Handler = r
-	s.Handler = handlers.GzipHandle(r)
+	s.Handler = r
+	//s.Handler = handlers.GzipHandle(r)
 
 	var c = make(chan storage.MetricsStorage)
 	if strings.ToLower(isRestoreStr) == "true" {
