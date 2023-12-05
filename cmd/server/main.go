@@ -20,13 +20,13 @@ func main() {
 	//    RESTORE, через флаг "-r=<ЗНАЧЕНИЕ>"
 	//    STORE_INTERVAL, через флаг "-i=<ЗНАЧЕНИЕ>"
 	//    STORE_FILE, через флаг "-f=<ЗНАЧЕНИЕ>"
-	var hostPort string
+	var hostPortStr string
 	var isRestoreBool bool
 	var storeIntervalStr string
 	var storeFilePathStr string
-	flag.StringVar(&hostPort, "a", "localhost:8080", "ADDRESS should be in 'ip:port' format")
-	flag.BoolVar(&isRestoreBool, "r", true, "RESTORE variable or flag 'r' should be 'true' of 'false'")
-	flag.StringVar(&storeIntervalStr, "i", "", "RESTORE variable or flag 'r' should be 'true' of 'false'.")
+	flag.StringVar(&hostPortStr, "a", "localhost:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080")
+	flag.BoolVar(&isRestoreBool, "r", true, "Value for -r (RESTORE)  should be 'true' of 'false'")
+	flag.StringVar(&storeIntervalStr, "i", "300", "Value for -i (STORE_INTERVAL) flag 'r' should be time in second, example: 300")
 	flag.StringVar(&storeFilePathStr, "f", "/tmp/devops-metrics-db.json", "Store file path should be "+
 		"absolute path to file. If STORE_FILE variable is empty string than storing functionality will not be used.")
 	flag.Parse()
@@ -39,9 +39,14 @@ func main() {
 	envStoreIntervalStr, isEnvStoreInterval := os.LookupEnv("STORE_INTERVAL")
 	envRestoreStr, isEnvRestore := os.LookupEnv("RESTORE")
 	envStoreFilePath, isEnvStoreFilePath := os.LookupEnv("STORE_FILE")
+
 	if isEnvHostPort && envHostPortStr != "" {
-		hostPort = envHostPortStr
+		hostPortStr = envHostPortStr
 	}
+	if isEnvStoreInterval && envStoreIntervalStr != "" {
+		storeIntervalStr = envStoreIntervalStr
+	}
+
 	if isEnvStoreInterval && envStoreIntervalStr != "" {
 		storeIntervalStr = envStoreIntervalStr
 	}
@@ -59,7 +64,9 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Compress(5))
-	r.HandleFunc("/", handlers.GetAllMetricsHandler)
+	//r.HandleFunc("/", handlers.GetAllMetricsHandler)
+	r.Get("/", handlers.GetAllMetricsHandlerAPI15)
+	r.Post("/", handlers.GetAllMetricsHandlerAPI2)
 	r.Post("/update/", handlers.UpdateHandler)
 	r.Post("/value/", handlers.ValueHandler)
 	r.Get("/update/gauge/*", handlers.GaugeHandlerAPI1)
@@ -72,23 +79,8 @@ func main() {
 	r.Get("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI1)
 	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
 
-	//hostPort := auxiliary.GetEnvVariable("ADDRESS", "localhost:8080")
-	//hostPort := auxiliary.GetParamValue("ADDRESS", "a", "localhost:8080", "ADDRESS should be in 'ip:port' format")
 	//hostPort = auxiliary.TrimQuotes(hostPort)
-
-	//storeIntervalStr := auxiliary.GetEnvVariable("STORE_INTERVAL", "300s")
 	//storeIntervalStr += "s"
-
-	//storeFilePath := ""
-
-	//isRestoreStr := auxiliary.GetParamValue("RESTORE", "r", "true", "RESTORE variable or flag 'r' should be 'true' of 'false'.")
-
-	/*if !(isStoreFilePath && valueStoreFilePath == "") {
-		//storeFilePath = auxiliary.GetEnvVariable("STORE_FILE", "/tmp/devops-metrics-db.json")
-		storeFilePath = auxiliary.GetParamValue("STORE_FILE", "f", "/tmp/devops-metrics-db.json", "Store file path should be absolute path "+
-			"to file. If STORE_FILE variable is empty string than storing functionality will not be used.")
-	}*/
-	//isRestoreStr := auxiliary.GetEnvVariable("RESTORE", "true")
 
 	storeIntervalTime := 0 * time.Second
 	if storeIntervalStr != "0" {
@@ -103,12 +95,11 @@ func main() {
 	}
 
 	s := &http.Server{
-		Addr:         hostPort,
+		Addr:         hostPortStr,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 	s.Handler = r
-	//s.Handler = handlers.GzipHandle(r)
 
 	var c = make(chan storage.MetricsStorage)
 	if isRestoreBool {

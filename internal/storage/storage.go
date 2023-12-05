@@ -131,7 +131,7 @@ func RestoreMetricsFromFile(fileStoragePath string, ms *MetricsStorage) {
 		var tmp MetricsStorage
 		err = json.Unmarshal(fromFile, &tmp)
 		if err == nil {
-			fmt.Printf("INFO: Metrics from file were restored succesfully.")
+			fmt.Printf("INFO: Metrics from file were restored succesfully.\n")
 			*ms = tmp
 		} else {
 			fmt.Printf("ERROR: %s.\n", err)

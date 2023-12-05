@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"math/rand"
 	"net"
@@ -256,39 +257,48 @@ func main() {
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
 
-	//hostportStr := "127.0.0.1:8080"
-	//hostportStr := auxiliary.GetEnvVariable("ADDRESS", "localhost:8080")
-	hostportStr := auxiliary.GetParamValue("ADDRESS", "a", "localhost:8080", "Flag 'a' value should be in 'IP:PORT' format")
-	hostportStr = auxiliary.TrimQuotes(hostportStr)
+	//  ADDRESS, через флаг: "-a=<ЗНАЧЕНИЕ>"
+	//  REPORT_INTERVAL, через флаг: "-r=<ЗНАЧЕНИЕ>"
+	//  POLL_INTERVAL, через флаг: "-p=<ЗНАЧЕНИЕ>"
+	var hostPortStr string
+	var reportIntervalStr string
+	var pollIntervalStr string
+	flag.StringVar(&hostPortStr, "a", "127.0.0.1:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080")
+	flag.StringVar(&reportIntervalStr, "r", "10", "Value for -r (REPORT_INTERVAL) flag 'r' should be time in second, example: 10")
+	flag.StringVar(&pollIntervalStr, "p", "2", "Value for -p (POLL_INTERVAL) flag 'p' should be time in second, example: 2")
+	flag.Parse()
 
-	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostportStr)
-	if err != nil {
-		hostportStr = "127.0.0.1:8080"
-		fmt.Printf("WARNING: ADDRESS environment variable is not IP:port format. Will be used default host and"+
-			" port (%s).\n", hostportStr)
-
+	//  ADDRESS (по умолчанию: "127.0.0.1:8080" или "localhost:8080")
+	//  REPORT_INTERVAL (по умолчанию: 10 секунд)
+	//  POLL_INTERVAL (по умолчанию: 2 секунды)
+	envHostPortStr, isEnvHostPort := os.LookupEnv("ADDRESS")
+	envReportIntervalStr, isEnvReportInterval := os.LookupEnv("STORE_INTERVAL")
+	envPollIntervalStr, isEnvPollInterval := os.LookupEnv("STORE_INTERVAL")
+	if isEnvHostPort && envHostPortStr != "" {
+		hostPortStr = envHostPortStr
 	}
+	if isEnvReportInterval && envReportIntervalStr != "" {
+		reportIntervalStr = envReportIntervalStr
+	}
+	if isEnvPollInterval && envPollIntervalStr != "" {
+		reportIntervalStr = envReportIntervalStr
+	}
+
+	//hostportStr := auxiliary.GetParamValue("ADDRESS", "a", "localhost:8080", "Flag 'a' value should be in 'IP:PORT' format")
+	hostPortStr = auxiliary.TrimQuotes(hostPortStr)
+
+	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostPortStr)
 
 	var pollInterval time.Duration
-	//pollInterval := 2 * time.Second
-	pollIntervalStr := auxiliary.GetParamValue("REPORT_INTERVAL", "r", "2",
-		"flag 'r' should be in seconds")
-	if os.Getenv("POLL_INTERVAL") != "" {
-		//pollValue, err := strconv.Atoi(os.Getenv("POLL_INTERVAL"))
-		pollValue, err := strconv.Atoi(pollIntervalStr)
-		if err == nil {
-			pollInterval = time.Duration(pollValue) * time.Second
-		}
+	pollValue, err := strconv.Atoi(pollIntervalStr)
+	if err == nil {
+		pollInterval = time.Duration(pollValue) * time.Second
 	}
+
 	var reportInterval time.Duration
-	//reportInterval := 10 * time.Second
-	reportIntervalStr := auxiliary.GetParamValue("POLL_INTERVAL", "p", "10", "flag 'p' should be in seconds")
-	if os.Getenv("REPORT_INTERVAL") != "" {
-		//reportValue, err := strconv.Atoi(os.Getenv("REPORT_INTERVAL"))
-		reportValue, err := strconv.Atoi(reportIntervalStr)
-		if err == nil {
-			reportInterval = time.Duration(reportValue) * time.Second
-		}
+	reportValue, err := strconv.Atoi(reportIntervalStr)
+	if err == nil {
+		reportInterval = time.Duration(reportValue) * time.Second
 	}
 
 	fmt.Printf("DEBUG: PollInterval is %s.\n", pollInterval)

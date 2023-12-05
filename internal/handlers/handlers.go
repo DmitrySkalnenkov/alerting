@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -99,6 +100,7 @@ func ValueHandler(w http.ResponseWriter, r *http.Request) {
 		var curMetric storage.Metrics
 		err := decoder.Decode(&curMetric)
 		if err != nil {
+
 			log.Println(err)
 			return
 		}
@@ -268,7 +270,8 @@ func GetCounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 func GetAllMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		GetAllMetricsHandlerAPI1(w, r)
+		//GetAllMetricsHandlerAPI1(w, r)
+		GetAllMetricsHandlerAPI15(w, r)
 	case "POST":
 		GetAllMetricsHandlerAPI2(w, r)
 	}
@@ -287,6 +290,22 @@ func GetAllMetricsHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	for mName, mValue := range storage.Mstorage.Counters {
 		fmt.Printf("%v - %v\n", mName, mValue)
 		io.WriteString(w, fmt.Sprintf("%v - %v\n", mName, mValue))
+	}
+}
+func GetAllMetricsHandlerAPI15(w http.ResponseWriter, r *http.Request) {
+	//w.Header().Set("Content-Encoding", "gzip")
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(r.Body)
+	w.Header().Set("Content-Type", http.DetectContentType(buf.Bytes()))
+	w.Header().Set("Content-Type", "text/html")
+	for i := range *storage.MetStorage {
+		if ((*storage.MetStorage)[i].MType) == "gauge" {
+			fmt.Printf("DEBUG: %v. %v:%v\n", i, (*storage.MetStorage)[i].ID, *(*storage.MetStorage)[i].Value)
+			io.WriteString(w, fmt.Sprintf("%v - %v\n", (*storage.MetStorage)[i].ID, *(*storage.MetStorage)[i].Value))
+		} else if ((*storage.MetStorage)[i].MType) == "counter" {
+			fmt.Printf("DEBUG: %v. %v:%v\n", i, (*storage.MetStorage)[i].ID, *(*storage.MetStorage)[i].Delta)
+			io.WriteString(w, fmt.Sprintf("%v - %v\n", (*storage.MetStorage)[i].ID, *(*storage.MetStorage)[i].Delta))
+		}
 	}
 }
 
