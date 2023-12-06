@@ -288,6 +288,9 @@ func main() {
 	hostPortStr = auxiliary.TrimQuotes(hostPortStr)
 
 	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostPortStr)
+	if err != nil {
+		fmt.Printf("ERROR: Cannot get IP and PORT value from ADDRESS string (%s). \n", hostPortStr)
+	}
 
 	var pollInterval time.Duration
 	pollValue, err := strconv.Atoi(pollIntervalStr)
