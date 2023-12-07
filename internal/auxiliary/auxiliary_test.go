@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestGetParamValue(t *testing.T) {
+/*func TestGetParamValue(t *testing.T) {
 	type inputs struct {
 		envVarName         string
 		envVarDefaultValue string
@@ -76,7 +76,7 @@ func TestGetParamValue(t *testing.T) {
 		})
 	}
 
-}
+}*/
 
 func TestGetEnvVariable(t *testing.T) {
 	type inputs struct {

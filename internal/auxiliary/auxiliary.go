@@ -7,7 +7,7 @@ import (
 )
 
 // GetParameterValue gets parameter value from flag or environment variable (environment more prior)
-func GetParamValue(envVarName string, flagName, defaultValue string, usageStr string) string {
+/*func GetParamValue(envVarName string, flagName, defaultValue string, usageStr string) string {
 	var paramValue string
 	_, isEnvVarExists := os.LookupEnv(envVarName)
 	if isEnvVarExists {
@@ -26,7 +26,7 @@ func GetParamValue(envVarName string, flagName, defaultValue string, usageStr st
 		}
 
 	}
-}
+}*/
 
 func GetEnvVariable(envVarName string, defaultValue string) string {
 	envVarValue := defaultValue
