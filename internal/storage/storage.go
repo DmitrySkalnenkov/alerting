@@ -1,6 +1,9 @@
 package storage
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,11 +12,14 @@ import (
 	"time"
 )
 
+var KeyHexStr = "0102030405060708090a0b0c0d0e0f10111213141516171819"
+
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
 	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	Hash  string   `json:"hash,omitempty"`  // значение хеш-функции
 }
 
 type MetricsStorage []Metrics
@@ -25,6 +31,7 @@ var NilMetric = Metrics{
 	MType: "",
 	Delta: nil,
 	Value: nil,
+	Hash:  "",
 }
 
 func NewMetricStorage() *MetricsStorage {
@@ -38,7 +45,34 @@ func NewMetric() *Metrics {
 	N.MType = ""
 	N.Value = new(float64)
 	N.Delta = new(int64)
+	N.Hash = ""
 	return N
+}
+
+// StringToHexStr() converts ACCII symbol string to HEX string
+func StringToHexStr(dataStr string) string {
+	return hex.EncodeToString([]byte(dataStr))
+}
+
+// HmacSha256() -- function HMAC-SHA256
+func HmacSha256(dataHexStr string, keyHexStr string) string {
+	var keyBin, dataBin []byte
+	var err error
+	keyBin, err = hex.DecodeString(keyHexStr)
+	if err != nil {
+		fmt.Printf("ERROR: Cannot convert key {%s} into hex string.\n", keyHexStr)
+		return ""
+	}
+	dataBin, err = hex.DecodeString(dataHexStr)
+	if err != nil {
+		fmt.Printf("ERROR: Cannot convert data {%s} into hex string.\n", dataHexStr)
+		return ""
+	}
+	hmac256 := hmac.New(sha256.New, keyBin)
+	hmac256.Write(dataBin)
+	dataHmac256 := hmac256.Sum(nil)
+	hmac256Hex := hex.EncodeToString(dataHmac256)
+	return hmac256Hex
 }
 
 // SetMetric -- Metric setter
@@ -50,10 +84,24 @@ func (pm *MetricsStorage) SetMetric(m Metrics) {
 				case "gauge":
 					(*pm)[i].Value = m.Value
 					(*pm)[i].Delta = new(int64)
+					//(*pm)[i].Hash = hash(fmt.Sprintf("%s:gauge:%f", id, value), key)
+					if KeyHexStr != "" {
+						dataStr := fmt.Sprintf("%s:gauge:%f", m.ID, *m.Value)
+						(*pm)[i].Hash = HmacSha256(StringToHexStr(dataStr), KeyHexStr)
+					} else {
+						(*pm)[i].Hash = ""
+					}
 					return
 				case "counter":
 					*(*pm)[i].Delta = *(*pm)[i].Delta + *m.Delta
 					(*pm)[i].Value = new(float64)
+					//(*pm)[i].Hash = h.hash(fmt.Sprintf("%s:counter:%d", id, delta), key),
+					if KeyHexStr != "" {
+						dataStr := fmt.Sprintf("%s:counter:%d", m.ID, *m.Delta)
+						(*pm)[i].Hash = HmacSha256(StringToHexStr(dataStr), KeyHexStr)
+					} else {
+						(*pm)[i].Hash = ""
+					}
 					return
 				}
 			}
@@ -82,7 +130,36 @@ func (pm *MetricsStorage) GetMetric(metricID string, metricType string) Metrics 
 // Comparing metric if them equal then true
 func IsMetricsEqual(m1 Metrics, m2 Metrics) (res bool) {
 	if m1.ID == m2.ID && m1.MType == m2.MType {
-		if (m1.Value == nil && m2.Value == nil) || (m1.Delta == nil && m2.Delta == nil) {
+		switch m1.MType {
+		case "gauge":
+			if m1.Value == nil && m2.Value == nil {
+				return true
+			}
+			if *m1.Value == *m2.Value && m1.Hash == m2.Hash {
+				//fmt.Printf("DEBUG: Metric1 value is %v, Metric2 value is %v.\n", *m1.Value, *m2.Value)
+				return true
+			} else {
+				return false
+			}
+		case "counter":
+			if m1.Delta == nil && m2.Delta == nil {
+				return true
+			}
+			if *m1.Delta == *m2.Delta && m1.Hash == m2.Hash {
+				//fmt.Printf("DEBUG: Metric1 value is %v, Metric2 value is %v.\n", *m1.Value, *m2.Value)
+				return true
+			} else {
+				return false
+			}
+		default:
+			return false
+		}
+	} else {
+		return false
+	}
+}
+
+/*	if (m1.Value == nil && m2.Value == nil) || (m1.Delta == nil && m2.Delta == nil) {
 			return true
 		} else if m1.Value != nil && m2.Value != nil {
 			if *m1.Value == *m2.Value {
@@ -96,10 +173,9 @@ func IsMetricsEqual(m1 Metrics, m2 Metrics) (res bool) {
 			}
 		}
 		return false
-	} else {
+	}else {
 		return false
-	}
-}
+	}*/
 
 func PointOf[T any](value T) *T {
 	return &value

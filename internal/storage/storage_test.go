@@ -5,10 +5,65 @@ import (
 	"testing"
 )
 
+func TestHmacSha256(t *testing.T) {
+	tests := []struct {
+		name    string
+		dataStr string
+		keyStr  string
+		want    string
+	}{
+		{
+			name:    "Positive test. Test case1 (RFC 4231)",
+			dataStr: "4869205468657265",
+			keyStr:  "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+			want:    "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7",
+		},
+		{
+			name:    "Positive test. Test case2 (RFC 4231)",
+			dataStr: "7768617420646f2079612077616e7420666f72206e6f7468696e673f",
+			keyStr:  "4a656665",
+			want:    "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843",
+		},
+		{
+			name:    "Positive test. Test case3 (RFC 4231)",
+			dataStr: "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+			keyStr:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			want:    "773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe",
+		},
+		{
+			name:    "Positive test. Test case7 (RFC 4231)",
+			dataStr: "5468697320697320612074657374207573696e672061206c6172676572207468616e20626c6f636b2d73697a65206b657920616e642061206c6172676572207468616e20626c6f636b2d73697a6520646174612e20546865206b6579206e6565647320746f20626520686173686564206265666f7265206265696e6720757365642062792074686520484d414320616c676f726974686d2e",
+			keyStr:  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			want:    "9b09ffa71b942fcb27635fbcd5b0e944bfdc63644f0713938a7f51535c3a35e2",
+		},
+		{
+			name:    "Negative test. Wrong key",
+			dataStr: "12345678901234567890",
+			keyStr:  "abcdefgh",
+			want:    "",
+		},
+		{
+			name:    "Negative test. Wrong data",
+			dataStr: "abcdefgh",
+			keyStr:  "12345678901234567890",
+			want:    "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			output := HmacSha256(tt.dataStr, tt.keyStr)
+			if output != tt.want {
+				t.Errorf("TEST_ERROR: Hash function output is %s, but expected result is %s.\n", output, tt.want)
+			}
+		})
+	}
+}
+
 func TestSetMetric(t *testing.T) {
 	var ms = MetricsStorage{
 		Metrics{ID: "TestMetric1", MType: "gauge", Value: PointOf(123.321)},
 		Metrics{ID: "TestMetric2", MType: "counter", Delta: PointOf(int64(123))},
+		Metrics{ID: "TestMetric3", MType: "gauge", Value: PointOf(234.567)},
 	}
 
 	tests := []struct {
@@ -27,6 +82,7 @@ func TestSetMetric(t *testing.T) {
 				ID:    "TestMetric1",
 				MType: "gauge",
 				Value: PointOf(123.321),
+				Hash:  "a47a6ad075b438dece782009a19c45b18050dcd9e9d85aafc02ee2cfb58b9e0d",
 			},
 		},
 		{
@@ -40,6 +96,7 @@ func TestSetMetric(t *testing.T) {
 				ID:    "TestMetric2",
 				MType: "counter",
 				Delta: PointOf(int64(246)),
+				Hash:  "1ecc232bd6cb1b65061ae636abe23e936d2e984b963603afb204cced3611f81a",
 			},
 		},
 	}
