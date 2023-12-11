@@ -12,7 +12,8 @@ import (
 	"time"
 )
 
-var KeyHexStr = "0102030405060708090a0b0c0d0e0f10111213141516171819"
+// var KeyHexStr = "0102030405060708090a0b0c0d0e0f10111213141516171819"
+var KeyHexStr = ""
 
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
@@ -52,6 +53,19 @@ func NewMetric() *Metrics {
 // StringToHexStr() converts ACCII symbol string to HEX string
 func StringToHexStr(dataStr string) string {
 	return hex.EncodeToString([]byte(dataStr))
+}
+
+func isHexString(s string) bool {
+	_, err := hex.DecodeString(s)
+	return err == nil
+}
+func SetEncKey(keyVal string) string {
+	if isHexString(keyVal) {
+		return keyVal
+	} else {
+		fmt.Printf("WARN: Key value (%s) can't convert into hex. Hash calculation will be disabled.", keyVal)
+		return ""
+	}
 }
 
 // HmacSha256() -- function HMAC-SHA256

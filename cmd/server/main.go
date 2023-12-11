@@ -20,25 +20,30 @@ func main() {
 	//    RESTORE, через флаг "-r=<ЗНАЧЕНИЕ>"
 	//    STORE_INTERVAL, через флаг "-i=<ЗНАЧЕНИЕ>"
 	//    STORE_FILE, через флаг "-f=<ЗНАЧЕНИЕ>"
+	//    добавьте поддержку аргумента через флаг k=<КЛЮЧ>;
 	var hostPortStr string
 	var isRestoreBool bool
 	var storeIntervalStr string
 	var storeFilePathStr string
+	var keyValue string
 	flag.StringVar(&hostPortStr, "a", "localhost:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080")
 	flag.BoolVar(&isRestoreBool, "r", true, "Value for -r (RESTORE)  should be 'true' of 'false'")
 	flag.StringVar(&storeIntervalStr, "i", "300s", "Value for -i (STORE_INTERVAL) flag 'r' should be time in second, example: 300")
 	flag.StringVar(&storeFilePathStr, "f", "/tmp/devops-metrics-db.json", "Store file path should be "+
 		"absolute path to file. If STORE_FILE variable is empty string than storing functionality will not be used.")
+	flag.StringVar(&keyValue, "k", "", "Key value for HMAC-SHA-256 calculation of hash. Should be hexstring.Example: 300")
 	flag.Parse()
 
 	//   ADDRESS (по умолчанию: "127.0.0.1:8080" или "localhost:8080")
 	//   STORE_INTERVAL (по умолчанию 300) - интервал времени в секундах, по истечении которого текущие показания сервера сбрасываются на диск. (значение 0 - делает запись синхронной)
 	//   STORE_FILE по умолчанию ("/tmp/devops-metrics-db.json") - строка - имя файла, где хранятся значения (пустое значение - отключает функцию записи на диск)
 	//   RESTORE по умолчанию (true) - булево значение (true|false), определяющее загружать или нет начальные значения из указанного файла при старте сервера.
+	//   добавьте поддержку аргумента через переменную окружения KEY=<КЛЮЧ>;
 	envHostPortStr, isEnvHostPort := os.LookupEnv("ADDRESS")
 	envStoreIntervalStr, isEnvStoreInterval := os.LookupEnv("STORE_INTERVAL")
 	envRestoreStr, isEnvRestore := os.LookupEnv("RESTORE")
 	envStoreFilePath, isEnvStoreFilePath := os.LookupEnv("STORE_FILE")
+	envKeyValue, isKeyValue := os.LookupEnv("KEY")
 
 	if isEnvHostPort && envHostPortStr != "" {
 		hostPortStr = envHostPortStr
@@ -46,7 +51,6 @@ func main() {
 	if isEnvStoreInterval && envStoreIntervalStr != "" {
 		storeIntervalStr = envStoreIntervalStr
 	}
-
 	if isEnvStoreInterval && envStoreIntervalStr != "" {
 		storeIntervalStr = envStoreIntervalStr
 	}
@@ -60,7 +64,10 @@ func main() {
 	if isEnvStoreFilePath && envStoreIntervalStr != "" {
 		storeFilePathStr = envStoreFilePath
 	}
-
+	if isKeyValue && envKeyValue != "" {
+		keyValue = envKeyValue
+	}
+	storage.KeyHexStr = storage.SetEncKey(keyValue)
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Compress(5))
