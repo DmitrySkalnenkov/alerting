@@ -5,15 +5,19 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
 // var KeyHexStr = "0102030405060708090a0b0c0d0e0f10111213141516171819"
 var KeyHexStr = ""
+var ServerKeyHexStr = ""
+var AgentKeyHexStr = ""
 
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
@@ -48,6 +52,39 @@ func NewMetric() *Metrics {
 	N.Delta = new(int64)
 	N.Hash = ""
 	return N
+}
+
+func MakeMetric(id string, mType string, mData string) Metrics {
+	var N Metrics
+	var dataStr string
+	N.ID = id
+	switch mType {
+	case "gauge":
+		N.MType = mType
+		v, err := strconv.ParseFloat(mData, 64)
+		if err != nil {
+			fmt.Printf("ERROR: Cannot convert data value to float. Will be used nil metric.")
+			return NilMetric
+		}
+		N.Value = PointOf(v)
+		dataStr = fmt.Sprintf("%s:gauge:%f", N.ID, *N.Value)
+		N.Hash = HmacSha256(StringToHexStr(dataStr), AgentKeyHexStr)
+		return N
+	case "counter":
+		N.MType = mType
+		d, err := strconv.ParseInt(mData, 10, 64)
+		if err != nil {
+			fmt.Printf("ERROR: Cannot convert data value to int. Will be used nil metric.")
+			return NilMetric
+		}
+		N.Delta = PointOf(d)
+		dataStr = fmt.Sprintf("%s:counter:%f", N.ID, *N.Delta)
+		N.Hash = HmacSha256(StringToHexStr(dataStr), AgentKeyHexStr)
+		return N
+	default:
+		fmt.Printf("ERROR: Wrong metric type value. Must be 'counter' or 'gague'. Will be used nil metric\n", AgentKeyHexStr)
+		return NilMetric
+	}
 }
 
 // StringToHexStr() converts ACCII symbol string to HEX string
@@ -98,24 +135,10 @@ func (pm *MetricsStorage) SetMetric(m Metrics) {
 				case "gauge":
 					(*pm)[i].Value = m.Value
 					(*pm)[i].Delta = new(int64)
-					//(*pm)[i].Hash = hash(fmt.Sprintf("%s:gauge:%f", id, value), key)
-					if KeyHexStr != "" {
-						dataStr := fmt.Sprintf("%s:gauge:%f", m.ID, *m.Value)
-						(*pm)[i].Hash = HmacSha256(StringToHexStr(dataStr), KeyHexStr)
-					} else {
-						(*pm)[i].Hash = ""
-					}
 					return
 				case "counter":
 					*(*pm)[i].Delta = *(*pm)[i].Delta + *m.Delta
 					(*pm)[i].Value = new(float64)
-					//(*pm)[i].Hash = h.hash(fmt.Sprintf("%s:counter:%d", id, delta), key),
-					if KeyHexStr != "" {
-						dataStr := fmt.Sprintf("%s:counter:%d", m.ID, *m.Delta)
-						(*pm)[i].Hash = HmacSha256(StringToHexStr(dataStr), KeyHexStr)
-					} else {
-						(*pm)[i].Hash = ""
-					}
 					return
 				}
 			}
@@ -137,7 +160,7 @@ func (pm *MetricsStorage) GetMetric(metricID string, metricType string) Metrics 
 			return (*pm)[i]
 		}
 	}
-	//fmt.Printf("DEBUG: MetricName %v with type %v not found.\n", metricID, metricType)
+	fmt.Printf("DEBUG: MetricName %v with type %v not found.\n", metricID, metricType)
 	return NilMetric
 }
 
@@ -172,24 +195,6 @@ func IsMetricsEqual(m1 Metrics, m2 Metrics) (res bool) {
 		return false
 	}
 }
-
-/*	if (m1.Value == nil && m2.Value == nil) || (m1.Delta == nil && m2.Delta == nil) {
-			return true
-		} else if m1.Value != nil && m2.Value != nil {
-			if *m1.Value == *m2.Value {
-				//fmt.Printf("DEBUG: Metric1 value is %v, Metric2 value is %v.\n", *m1.Value, *m2.Value)
-				return true
-			}
-		} else if m1.Delta != nil && m2.Delta != nil {
-			if *m1.Delta == *m2.Delta {
-				//fmt.Printf("DEBUG: Metric1 delta is %v, Metric2 delta is %v.\n", *m1.Delta, *m2.Delta)
-				return true
-			}
-		}
-		return false
-	}else {
-		return false
-	}*/
 
 func PointOf[T any](value T) *T {
 	return &value
@@ -228,8 +233,6 @@ func RestoreMetricsFromFile(fileStoragePath string, ms *MetricsStorage) {
 		}
 	}
 }
-
-//TODO: Check synchronization of update and writing from the channel
 
 // Writing metrics to file metric storage
 func WriteMetricsToFile(filePath string, ch chan MetricsStorage, st time.Duration) {

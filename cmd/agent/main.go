@@ -24,15 +24,26 @@ type Client struct {
 }
 
 // Sends metrics to server by GET and value of metric in URL -- /update/{gauge|counter}/[MetricName]/[MetricValue]
-func (cl Client) metricSendingAPI1(mA *[29][3]string) {
+// func (cl Client) metricSendingAPI1(mA *[29][3]string) {
+func (cl Client) metricSendingAPI1(mA storage.MetricsStorage) {
 	curURL := ""
 	for row := 0; row < len(mA); row++ {
-		if mA[row][0] != "" {
-			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
-			fmt.Printf("SendingRequest by GET method: http://%s:%s/update/%s/%s/%s \n", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
-			_, err := cl.sendRequest(curURL)
-			if err != nil {
-				fmt.Printf("ERROR: %v. \n", err)
+		if mA[row].ID != "" {
+			switch mA[row].MType {
+			case "gauge":
+				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, mA[row].MType, mA[row].ID, mA[row].Value)
+				fmt.Printf("SendingRequest by GET method: http://%s:%s/update/%s/%s/%s \n", cl.IP, cl.Port, mA[row].MType, mA[row].ID, mA[row].Value)
+				_, err := cl.sendRequest(curURL)
+				if err != nil {
+					fmt.Printf("ERROR: %v. \n", err)
+				}
+			case "counter":
+				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, mA[row].MType, mA[row].ID, mA[row].Delta)
+				fmt.Printf("SendingRequest by GET method: http://%s:%s/update/%s/%s/%s \n", cl.IP, cl.Port, mA[row].MType, mA[row].ID, mA[row].Delta)
+				_, err := cl.sendRequest(curURL)
+				if err != nil {
+					fmt.Printf("ERROR: %v. \n", err)
+				}
 			}
 		}
 	}
@@ -250,6 +261,14 @@ func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) 
 	fmt.Println(mArray)
 }
 
+func getMetricsArray(mArray storage.MetricsStorage, PollCount *int64, rtm *runtime.MemStats) {
+	runtime.ReadMemStats(rtm)
+	//	*PollCount = *PollCount + 1
+	//	RandomValue := float64(rand.Float64())
+	mArray[0] = storage.MakeMetric("Alloc", "gague", strconv.FormatUint(rtm.Alloc, 10))
+	//fmt.Printf(mArray[0])
+}
+
 func main() {
 	StartTime := time.Now()
 	fmt.Printf("Start time: %s.\n", string(StartTime.String()))
@@ -260,20 +279,25 @@ func main() {
 	//  ADDRESS, через флаг: "-a=<ЗНАЧЕНИЕ>"
 	//  REPORT_INTERVAL, через флаг: "-r=<ЗНАЧЕНИЕ>"
 	//  POLL_INTERVAL, через флаг: "-p=<ЗНАЧЕНИЕ>"
+	//  добавьте поддержку аргумента через флаг k=<КЛЮЧ>;
 	var hostPortStr string
 	var reportIntervalStr string
 	var pollIntervalStr string
+	var keyValue string
 	flag.StringVar(&hostPortStr, "a", "127.0.0.1:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080")
 	flag.StringVar(&reportIntervalStr, "r", "10", "Value for -r (REPORT_INTERVAL) flag 'r' should be time in second, example: 10")
 	flag.StringVar(&pollIntervalStr, "p", "2", "Value for -p (POLL_INTERVAL) flag 'p' should be time in second, example: 2")
+	flag.StringVar(&keyValue, "k", "", "Key value for HMAC-SHA-256 calculation of hash. Should be hexstring, example: 300")
 	flag.Parse()
 
 	//  ADDRESS (по умолчанию: "127.0.0.1:8080" или "localhost:8080")
 	//  REPORT_INTERVAL (по умолчанию: 10 секунд)
 	//  POLL_INTERVAL (по умолчанию: 2 секунды)
+	//  добавьте поддержку аргумента через переменную окружения KEY=<КЛЮЧ>;
 	envHostPortStr, isEnvHostPort := os.LookupEnv("ADDRESS")
 	envReportIntervalStr, isEnvReportInterval := os.LookupEnv("STORE_INTERVAL")
 	envPollIntervalStr, isEnvPollInterval := os.LookupEnv("STORE_INTERVAL")
+	envKeyValue, isKeyValue := os.LookupEnv("KEY")
 	if isEnvHostPort && envHostPortStr != "" {
 		hostPortStr = envHostPortStr
 	}
@@ -282,6 +306,9 @@ func main() {
 	}
 	if isEnvPollInterval && envPollIntervalStr != "" {
 		reportIntervalStr = envReportIntervalStr
+	}
+	if isKeyValue && envKeyValue != "" {
+		keyValue = envKeyValue
 	}
 
 	//hostportStr := auxiliary.GetParamValue("ADDRESS", "a", "localhost:8080", "Flag 'a' value should be in 'IP:PORT' format")
@@ -312,7 +339,7 @@ func main() {
 
 	var PollCount int64
 	var rtm runtime.MemStats
-	var MetricArray [29][3]string
+	var MetricArray storage.MetricsStorage
 	var cl Client
 	cl.IP = serverIPAddress
 	cl.Port = serverTCPPort
@@ -326,12 +353,13 @@ func main() {
 		CurTime = time.Now()
 		if CurTime.Sub(LastPoolTime) > pollInterval {
 			fmt.Printf("PoolTime: %s.\n", string(LastPoolTime.String()))
-			getMetrics(&MetricArray, &PollCount, &rtm)
+			//getMetrics(&MetricArray, &PollCount, &rtm)
+			getMetricsArray(MetricArray, &PollCount, &rtm)
 			LastPoolTime = time.Now()
 		}
 		if CurTime.Sub(LastReportTime) > reportInterval {
 			fmt.Printf("ReportTime: %s.\n", string(LastReportTime.String()))
-			cl.metricSendingAPI1(&MetricArray)
+			cl.metricSendingAPI1(MetricArray)
 			PollCount = 0
 			//cl.metricSendingAPI2(&MetricArray)
 			LastReportTime = time.Now()

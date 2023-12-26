@@ -25,13 +25,13 @@ func main() {
 	var isRestoreBool bool
 	var storeIntervalStr string
 	var storeFilePathStr string
-	var keyValue string
+	var serverKeyValue string
 	flag.StringVar(&hostPortStr, "a", "localhost:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080")
 	flag.BoolVar(&isRestoreBool, "r", true, "Value for -r (RESTORE)  should be 'true' of 'false'")
 	flag.StringVar(&storeIntervalStr, "i", "300s", "Value for -i (STORE_INTERVAL) flag 'r' should be time in second, example: 300")
 	flag.StringVar(&storeFilePathStr, "f", "/tmp/devops-metrics-db.json", "Store file path should be "+
 		"absolute path to file. If STORE_FILE variable is empty string than storing functionality will not be used.")
-	flag.StringVar(&keyValue, "k", "", "Key value for HMAC-SHA-256 calculation of hash. Should be hexstring.Example: 300")
+	flag.StringVar(&serverKeyValue, "k", "", "Server key value for HMAC-SHA-256 calculation. Should be hexstring. Example: 300")
 	flag.Parse()
 
 	//   ADDRESS (по умолчанию: "127.0.0.1:8080" или "localhost:8080")
@@ -43,7 +43,7 @@ func main() {
 	envStoreIntervalStr, isEnvStoreInterval := os.LookupEnv("STORE_INTERVAL")
 	envRestoreStr, isEnvRestore := os.LookupEnv("RESTORE")
 	envStoreFilePath, isEnvStoreFilePath := os.LookupEnv("STORE_FILE")
-	envKeyValue, isKeyValue := os.LookupEnv("KEY")
+	envServerKeyValue, isServerKeyValue := os.LookupEnv("KEY")
 
 	if isEnvHostPort && envHostPortStr != "" {
 		hostPortStr = envHostPortStr
@@ -64,10 +64,10 @@ func main() {
 	if isEnvStoreFilePath && envStoreIntervalStr != "" {
 		storeFilePathStr = envStoreFilePath
 	}
-	if isKeyValue && envKeyValue != "" {
-		keyValue = envKeyValue
+	if isServerKeyValue && envServerKeyValue != "" {
+		serverKeyValue = envServerKeyValue
 	}
-	storage.KeyHexStr = storage.SetEncKey(keyValue)
+	
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Compress(5))
