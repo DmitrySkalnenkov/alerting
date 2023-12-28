@@ -130,7 +130,6 @@ func GaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 		v, err = strconv.ParseFloat(pathSlice[4], 64)
 		*curMetric.Value = v
 		fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", curMetric.ID, *curMetric.Value)
-		storage.MetricHashCalcula
 		if err == nil {
 			w.WriteHeader(http.StatusOK)
 			storage.MetStorage.SetMetric(curMetric)

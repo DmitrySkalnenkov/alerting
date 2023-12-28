@@ -31,15 +31,15 @@ func (cl Client) metricSendingAPI1(mA storage.MetricsStorage) {
 		if mA[row].ID != "" {
 			switch mA[row].MType {
 			case "gauge":
-				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, mA[row].MType, mA[row].ID, mA[row].Value)
-				fmt.Printf("SendingRequest by GET method: http://%s:%s/update/%s/%s/%s \n", cl.IP, cl.Port, mA[row].MType, mA[row].ID, mA[row].Value)
+				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%f", cl.IP, cl.Port, mA[row].MType, mA[row].ID, *(mA[row].Value))
+				fmt.Printf("SendingRequest by GET method: %s \n", curURL)
 				_, err := cl.sendRequest(curURL)
 				if err != nil {
 					fmt.Printf("ERROR: %v. \n", err)
 				}
 			case "counter":
-				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, mA[row].MType, mA[row].ID, mA[row].Delta)
-				fmt.Printf("SendingRequest by GET method: http://%s:%s/update/%s/%s/%s \n", cl.IP, cl.Port, mA[row].MType, mA[row].ID, mA[row].Delta)
+				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%d", cl.IP, cl.Port, mA[row].MType, mA[row].ID, *(mA[row].Delta))
+				fmt.Printf("SendingRequest by GET method: %s \n", curURL)
 				_, err := cl.sendRequest(curURL)
 				if err != nil {
 					fmt.Printf("ERROR: %v. \n", err)
@@ -263,9 +263,37 @@ func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) 
 
 func getMetricsArray(mArray storage.MetricsStorage, PollCount *int64, rtm *runtime.MemStats) {
 	runtime.ReadMemStats(rtm)
-	//	*PollCount = *PollCount + 1
-	//	RandomValue := float64(rand.Float64())
-	mArray[0] = storage.MakeMetric("Alloc", "gague", strconv.FormatUint(rtm.Alloc, 10))
+	*PollCount = *PollCount + 1
+	RandomValue := float64(rand.Float64())
+	mArray[0] = storage.MakeMetric("Alloc", "gauge", strconv.FormatUint(rtm.Alloc, 10))
+	mArray[1] = storage.MakeMetric("BuckHashSys", "gauge", strconv.FormatUint(rtm.BuckHashSys, 10))
+	mArray[2] = storage.MakeMetric("Frees", "gauge", strconv.FormatUint(rtm.Frees, 10))
+	mArray[3] = storage.MakeMetric("GCCPUFraction", "gauge", strconv.FormatFloat(rtm.GCCPUFraction, 'G', -1, 64))
+	mArray[4] = storage.MakeMetric("GCSys", "gauge", strconv.FormatUint(rtm.GCSys, 10))
+	mArray[5] = storage.MakeMetric("HeapAlloc", "gauge", strconv.FormatUint(rtm.HeapAlloc, 10))
+	mArray[6] = storage.MakeMetric("HeapIdle", "gauge", strconv.FormatUint(rtm.HeapIdle, 10))
+	mArray[7] = storage.MakeMetric("HeapInuse", "gauge", strconv.FormatUint(rtm.HeapInuse, 10))
+	mArray[8] = storage.MakeMetric("HeapObjects", "gauge", strconv.FormatUint(rtm.HeapObjects, 10))
+	mArray[9] = storage.MakeMetric("HeapReleased", "gauge", strconv.FormatUint(rtm.HeapReleased, 10))
+	mArray[10] = storage.MakeMetric("HeapSys", "gauge", strconv.FormatUint(rtm.HeapSys, 10))
+	mArray[11] = storage.MakeMetric("LastGC", "gauge", strconv.FormatUint(rtm.LastGC, 10))
+	mArray[12] = storage.MakeMetric("Lookups", "gauge", strconv.FormatUint(rtm.Lookups, 10))
+	mArray[13] = storage.MakeMetric("MCacheInuse", "gauge", strconv.FormatUint(rtm.MCacheInuse, 10))
+	mArray[14] = storage.MakeMetric("MCacheSys", "gauge", strconv.FormatUint(rtm.MCacheSys, 10))
+	mArray[15] = storage.MakeMetric("MSpanInuse", "gauge", strconv.FormatUint(rtm.MSpanInuse, 10))
+	mArray[16] = storage.MakeMetric("MSpanSys", "gauge", strconv.FormatUint(rtm.MSpanSys, 10))
+	mArray[17] = storage.MakeMetric("Mallocs", "gauge", strconv.FormatUint(rtm.Mallocs, 10))
+	mArray[18] = storage.MakeMetric("NextGC", "gauge", strconv.FormatUint(rtm.NextGC, 10))
+	mArray[19] = storage.MakeMetric("NumForcedGC", "gauge", strconv.FormatUint(uint64(rtm.NumForcedGC), 10))
+	mArray[20] = storage.MakeMetric("NumGC", "gauge", strconv.FormatUint(uint64(rtm.NumGC), 10))
+	mArray[21] = storage.MakeMetric("OtherSys", "gauge", strconv.FormatUint(rtm.OtherSys, 10))
+	mArray[22] = storage.MakeMetric("PollCount", "gauge", strconv.FormatInt(*PollCount, 10))
+	mArray[23] = storage.MakeMetric("PauseTotalNs", "gauge", strconv.FormatUint(rtm.PauseTotalNs, 10))
+	mArray[24] = storage.MakeMetric("RandomValue", "gauge", strconv.FormatFloat(RandomValue, 'G', -1, 64))
+	mArray[25] = storage.MakeMetric("StackInuse", "gauge", strconv.FormatUint(rtm.StackInuse, 10))
+	mArray[26] = storage.MakeMetric("StackSys", "gauge", strconv.FormatUint(rtm.StackSys, 10))
+	mArray[27] = storage.MakeMetric("Sys", "gauge", strconv.FormatUint(rtm.Sys, 10))
+	mArray[28] = storage.MakeMetric("TotalAlloc", "gauge", strconv.FormatUint(rtm.TotalAlloc, 10))
 	//fmt.Printf(mArray[0])
 }
 
@@ -339,7 +367,9 @@ func main() {
 
 	var PollCount int64
 	var rtm runtime.MemStats
+	METRIC_AMOUNT := 29
 	var MetricArray storage.MetricsStorage
+	MetricArray = make(storage.MetricsStorage, METRIC_AMOUNT)
 	var cl Client
 	cl.IP = serverIPAddress
 	cl.Port = serverTCPPort

@@ -78,11 +78,11 @@ func MakeMetric(id string, mType string, mData string) Metrics {
 			return NilMetric
 		}
 		N.Delta = PointOf(d)
-		dataStr = fmt.Sprintf("%s:counter:%f", N.ID, *N.Delta)
+		dataStr = fmt.Sprintf("%s:counter:%d", N.ID, *N.Delta)
 		N.Hash = HmacSha256(StringToHexStr(dataStr), AgentKeyHexStr)
 		return N
 	default:
-		fmt.Printf("ERROR: Wrong metric type value. Must be 'counter' or 'gague'. Will be used nil metric\n", AgentKeyHexStr)
+		fmt.Printf("ERROR: Wrong metric type value. Must be 'counter' or 'gague'. Will be used nil metric\n")
 		return NilMetric
 	}
 }
