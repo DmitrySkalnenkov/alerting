@@ -29,7 +29,7 @@ type Metrics struct {
 
 type MetricsStorage []Metrics
 
-var MetStorage = NewMetricStorage()
+var ServerMetStorage = NewMetricStorage()
 
 var NilMetric = Metrics{
 	ID:    "",
@@ -202,7 +202,7 @@ func PointOf[T any](value T) *T {
 
 // Update metrics values in channel
 func UpdateMetricsInChannel(ch chan MetricsStorage) {
-	ms := MetStorage
+	ms := ServerMetStorage
 	for i := 0; ; i++ {
 		ch <- *ms
 		time.Sleep(1 * time.Second)
@@ -229,7 +229,8 @@ func RestoreMetricsFromFile(fileStoragePath string, ms *MetricsStorage) {
 			fmt.Printf("INFO: Metrics from file were restored succesfully.\n")
 			*ms = tmp
 		} else {
-			fmt.Printf("ERROR: %s.\n", err)
+			fmt.Printf("ERROR: %s. Metrics cannot be restored.\n", err)
+			ms = NewMetricStorage()
 		}
 	}
 }

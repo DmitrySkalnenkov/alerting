@@ -25,24 +25,26 @@ type Client struct {
 
 // Sends metrics to server by GET and value of metric in URL -- /update/{gauge|counter}/[MetricName]/[MetricValue]
 // func (cl Client) metricSendingAPI1(mA *[29][3]string) {
-func (cl Client) metricSendingAPI1(mA storage.MetricsStorage) {
+func (cl Client) metricSendingAPI1(mA *storage.MetricsStorage) {
 	curURL := ""
-	for row := 0; row < len(mA); row++ {
-		if mA[row].ID != "" {
-			switch mA[row].MType {
+	for row := 0; row < len(*mA); row++ {
+		if (*mA)[row].ID != "" {
+			switch (*mA)[row].MType {
 			case "gauge":
-				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%f", cl.IP, cl.Port, mA[row].MType, mA[row].ID, *(mA[row].Value))
-				fmt.Printf("SendingRequest by GET method: %s \n", curURL)
+				pv := (*mA)[row].Value
+				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%f", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, *pv)
+				fmt.Printf("INFO: SendingRequest by GET method: %s \n", curURL)
 				_, err := cl.sendRequest(curURL)
 				if err != nil {
-					fmt.Printf("ERROR: %v. \n", err)
+					fmt.Printf("ERROR_AGT: sendRequest() error: %v. \n", err)
 				}
 			case "counter":
-				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%d", cl.IP, cl.Port, mA[row].MType, mA[row].ID, *(mA[row].Delta))
-				fmt.Printf("SendingRequest by GET method: %s \n", curURL)
+				pd := (*mA)[row].Delta
+				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%d", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, *pd)
+				fmt.Printf("INFO: SendingRequest by GET method: %s \n", curURL)
 				_, err := cl.sendRequest(curURL)
 				if err != nil {
-					fmt.Printf("ERROR: %v. \n", err)
+					fmt.Printf("ERROR_AGT: %v. \n", err)
 				}
 			}
 		}
@@ -50,7 +52,7 @@ func (cl Client) metricSendingAPI1(mA storage.MetricsStorage) {
 }
 
 // Sends metrics to server
-func (cl Client) metricSendingAPI2(mA *[29][3]string) {
+/*func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 	curURL := ""
 	var curMetric storage.Metrics
 	for row := 0; row < len(mA); row++ {
@@ -61,17 +63,17 @@ func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 			case "gauge":
 				v, err := strconv.ParseFloat(mA[row][2], 64)
 				if err != nil {
-					fmt.Printf("ERROR: Error of converting string %v to float64", mA[row][2])
+					fmt.Printf("ERROR_ANT: Error of converting string %v to float64", mA[row][2])
 				}
 				curMetric.Value = storage.PointOf(float64(v))
 			case "counter":
 				d, err := strconv.ParseInt(mA[row][2], 10, 64)
 				if err != nil {
-					fmt.Printf("ERROR: Error of converting string %v to int64", mA[row][2])
+					fmt.Printf("ERROR_ANT: Error of converting string %v to int64", mA[row][2])
 				}
 				curMetric.Delta = storage.PointOf(int64(d))
 			default:
-				fmt.Printf("ERROR: Wrong metric type. It must be `gauge` or `counter`")
+				fmt.Printf("ERROR_ANT: Wrong metric type. It must be `gauge` or `counter`")
 
 			}
 			curURL = fmt.Sprintf("http://%s:%s/update/", cl.IP, cl.Port)
@@ -79,27 +81,27 @@ func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 				curMetric.ID, curMetric.MType, curMetric.Value, curMetric.Delta)
 			_, err := cl.sendJSONMetric(curURL, curMetric)
 			if err != nil {
-				fmt.Printf("ERROR: %v.\n", err)
+				fmt.Printf("ERROR_ANT: %v.\n", err)
 			}
 		}
 	}
-}
+}*/
 
 // Send request by plain text by GET method
 func (cl Client) sendRequest(curURL string) (string, error) {
 	request, err := http.NewRequest(http.MethodGet, curURL, nil)
 	//request.Header.Set("Content-Type", "text/plain")
 	if err != nil {
-		fmt.Printf("ERROR: %s.\n", err)
+		//fmt.Printf("ERROR_ANT: %s.\n", err)
 		return "", err
 	}
 	response, err := cl.Client.Do(request)
 	if err != nil {
-		fmt.Printf("ERROR: %s.\n", err)
+		//fmt.Printf("ERROR_ANT: %s.\n", err)
 		return "", err
 	}
 	defer response.Body.Close()
-	fmt.Printf("Response status code: %s.\n", response.Status)
+	fmt.Printf("INFO: Response status code: %s.\n", response.Status)
 	return string(response.Status), nil
 }
 
@@ -108,13 +110,13 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 	payloadBuf := new(bytes.Buffer)
 	err := json.NewEncoder(payloadBuf).Encode(m)
 	if err != nil {
-		fmt.Printf("ERROR: Error value is  %v.\n", err)
+		fmt.Printf("ERROR_ANT: Error value is  %v.\n", err)
 		return "", err
 	}
 	request, err := http.NewRequest(http.MethodPost, curURL, payloadBuf)
 	fmt.Printf("DEBUG: request is %v.\n", request)
 	if err != nil {
-		fmt.Printf("ERROR: %s.\n", err)
+		fmt.Printf("ERROR_ANT: %s.\n", err)
 		return "", err
 	}
 	request.Header.Set("Content-Type", "application/json")
@@ -125,7 +127,7 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 	//}
 	response, err := cl.Client.Do(request)
 	if err != nil {
-		fmt.Printf("ERROR: Error value is  %v. Response is  %v \n", err, response)
+		fmt.Printf("ERROR_ANT: Error value is  %v. Response is  %v \n", err, response)
 		return "", err
 	}
 	defer response.Body.Close()
@@ -134,7 +136,7 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 	return string(response.Status), nil
 }
 
-// Get metrics and store them into array (also increment PollCount and get new RandomValue)
+/*// Get metrics and store them into array (also increment PollCount and get new RandomValue)
 func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) {
 	runtime.ReadMemStats(rtm)
 	*PollCount = *PollCount + 1
@@ -260,41 +262,42 @@ func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) 
 	fmt.Println()
 	fmt.Println(mArray)
 }
+*/
 
-func getMetricsArray(mArray storage.MetricsStorage, PollCount *int64, rtm *runtime.MemStats) {
+func getMetricsArray(mA *storage.MetricsStorage, PollCount *int64, rtm *runtime.MemStats) {
 	runtime.ReadMemStats(rtm)
 	*PollCount = *PollCount + 1
 	RandomValue := float64(rand.Float64())
-	mArray[0] = storage.MakeMetric("Alloc", "gauge", strconv.FormatUint(rtm.Alloc, 10))
-	mArray[1] = storage.MakeMetric("BuckHashSys", "gauge", strconv.FormatUint(rtm.BuckHashSys, 10))
-	mArray[2] = storage.MakeMetric("Frees", "gauge", strconv.FormatUint(rtm.Frees, 10))
-	mArray[3] = storage.MakeMetric("GCCPUFraction", "gauge", strconv.FormatFloat(rtm.GCCPUFraction, 'G', -1, 64))
-	mArray[4] = storage.MakeMetric("GCSys", "gauge", strconv.FormatUint(rtm.GCSys, 10))
-	mArray[5] = storage.MakeMetric("HeapAlloc", "gauge", strconv.FormatUint(rtm.HeapAlloc, 10))
-	mArray[6] = storage.MakeMetric("HeapIdle", "gauge", strconv.FormatUint(rtm.HeapIdle, 10))
-	mArray[7] = storage.MakeMetric("HeapInuse", "gauge", strconv.FormatUint(rtm.HeapInuse, 10))
-	mArray[8] = storage.MakeMetric("HeapObjects", "gauge", strconv.FormatUint(rtm.HeapObjects, 10))
-	mArray[9] = storage.MakeMetric("HeapReleased", "gauge", strconv.FormatUint(rtm.HeapReleased, 10))
-	mArray[10] = storage.MakeMetric("HeapSys", "gauge", strconv.FormatUint(rtm.HeapSys, 10))
-	mArray[11] = storage.MakeMetric("LastGC", "gauge", strconv.FormatUint(rtm.LastGC, 10))
-	mArray[12] = storage.MakeMetric("Lookups", "gauge", strconv.FormatUint(rtm.Lookups, 10))
-	mArray[13] = storage.MakeMetric("MCacheInuse", "gauge", strconv.FormatUint(rtm.MCacheInuse, 10))
-	mArray[14] = storage.MakeMetric("MCacheSys", "gauge", strconv.FormatUint(rtm.MCacheSys, 10))
-	mArray[15] = storage.MakeMetric("MSpanInuse", "gauge", strconv.FormatUint(rtm.MSpanInuse, 10))
-	mArray[16] = storage.MakeMetric("MSpanSys", "gauge", strconv.FormatUint(rtm.MSpanSys, 10))
-	mArray[17] = storage.MakeMetric("Mallocs", "gauge", strconv.FormatUint(rtm.Mallocs, 10))
-	mArray[18] = storage.MakeMetric("NextGC", "gauge", strconv.FormatUint(rtm.NextGC, 10))
-	mArray[19] = storage.MakeMetric("NumForcedGC", "gauge", strconv.FormatUint(uint64(rtm.NumForcedGC), 10))
-	mArray[20] = storage.MakeMetric("NumGC", "gauge", strconv.FormatUint(uint64(rtm.NumGC), 10))
-	mArray[21] = storage.MakeMetric("OtherSys", "gauge", strconv.FormatUint(rtm.OtherSys, 10))
-	mArray[22] = storage.MakeMetric("PollCount", "gauge", strconv.FormatInt(*PollCount, 10))
-	mArray[23] = storage.MakeMetric("PauseTotalNs", "gauge", strconv.FormatUint(rtm.PauseTotalNs, 10))
-	mArray[24] = storage.MakeMetric("RandomValue", "gauge", strconv.FormatFloat(RandomValue, 'G', -1, 64))
-	mArray[25] = storage.MakeMetric("StackInuse", "gauge", strconv.FormatUint(rtm.StackInuse, 10))
-	mArray[26] = storage.MakeMetric("StackSys", "gauge", strconv.FormatUint(rtm.StackSys, 10))
-	mArray[27] = storage.MakeMetric("Sys", "gauge", strconv.FormatUint(rtm.Sys, 10))
-	mArray[28] = storage.MakeMetric("TotalAlloc", "gauge", strconv.FormatUint(rtm.TotalAlloc, 10))
-	//fmt.Printf(mArray[0])
+	(*mA)[0] = storage.MakeMetric("Alloc", "gauge", strconv.FormatUint(rtm.Alloc, 10))
+	(*mA)[1] = storage.MakeMetric("BuckHashSys", "gauge", strconv.FormatUint(rtm.BuckHashSys, 10))
+	(*mA)[2] = storage.MakeMetric("Frees", "gauge", strconv.FormatUint(rtm.Frees, 10))
+	(*mA)[3] = storage.MakeMetric("GCCPUFraction", "gauge", strconv.FormatFloat(rtm.GCCPUFraction, 'G', -1, 64))
+	(*mA)[4] = storage.MakeMetric("GCSys", "gauge", strconv.FormatUint(rtm.GCSys, 10))
+	(*mA)[5] = storage.MakeMetric("HeapAlloc", "gauge", strconv.FormatUint(rtm.HeapAlloc, 10))
+	(*mA)[6] = storage.MakeMetric("HeapIdle", "gauge", strconv.FormatUint(rtm.HeapIdle, 10))
+	(*mA)[7] = storage.MakeMetric("HeapInuse", "gauge", strconv.FormatUint(rtm.HeapInuse, 10))
+	(*mA)[8] = storage.MakeMetric("HeapObjects", "gauge", strconv.FormatUint(rtm.HeapObjects, 10))
+	(*mA)[9] = storage.MakeMetric("HeapReleased", "gauge", strconv.FormatUint(rtm.HeapReleased, 10))
+	(*mA)[10] = storage.MakeMetric("HeapSys", "gauge", strconv.FormatUint(rtm.HeapSys, 10))
+	(*mA)[11] = storage.MakeMetric("LastGC", "gauge", strconv.FormatUint(rtm.LastGC, 10))
+	(*mA)[12] = storage.MakeMetric("Lookups", "gauge", strconv.FormatUint(rtm.Lookups, 10))
+	(*mA)[13] = storage.MakeMetric("MCacheInuse", "gauge", strconv.FormatUint(rtm.MCacheInuse, 10))
+	(*mA)[14] = storage.MakeMetric("MCacheSys", "gauge", strconv.FormatUint(rtm.MCacheSys, 10))
+	(*mA)[15] = storage.MakeMetric("MSpanInuse", "gauge", strconv.FormatUint(rtm.MSpanInuse, 10))
+	(*mA)[16] = storage.MakeMetric("MSpanSys", "gauge", strconv.FormatUint(rtm.MSpanSys, 10))
+	(*mA)[17] = storage.MakeMetric("Mallocs", "gauge", strconv.FormatUint(rtm.Mallocs, 10))
+	(*mA)[18] = storage.MakeMetric("NextGC", "gauge", strconv.FormatUint(rtm.NextGC, 10))
+	(*mA)[19] = storage.MakeMetric("NumForcedGC", "gauge", strconv.FormatUint(uint64(rtm.NumForcedGC), 10))
+	(*mA)[20] = storage.MakeMetric("NumGC", "gauge", strconv.FormatUint(uint64(rtm.NumGC), 10))
+	(*mA)[21] = storage.MakeMetric("OtherSys", "gauge", strconv.FormatUint(rtm.OtherSys, 10))
+	(*mA)[22] = storage.MakeMetric("PollCount", "counter", strconv.FormatInt(int64(*PollCount), 10))
+	(*mA)[23] = storage.MakeMetric("PauseTotalNs", "gauge", strconv.FormatUint(rtm.PauseTotalNs, 10))
+	(*mA)[24] = storage.MakeMetric("RandomValue", "gauge", strconv.FormatFloat(RandomValue, 'G', -1, 64))
+	(*mA)[25] = storage.MakeMetric("StackInuse", "gauge", strconv.FormatUint(rtm.StackInuse, 10))
+	(*mA)[26] = storage.MakeMetric("StackSys", "gauge", strconv.FormatUint(rtm.StackSys, 10))
+	(*mA)[27] = storage.MakeMetric("Sys", "gauge", strconv.FormatUint(rtm.Sys, 10))
+	(*mA)[28] = storage.MakeMetric("TotalAlloc", "gauge", strconv.FormatUint(rtm.TotalAlloc, 10))
+	//fmt.Printf((*mA)[0])
 }
 
 func main() {
@@ -303,7 +306,7 @@ func main() {
 	var CurTime time.Time
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
-
+	time.Sleep(1 * time.Second)
 	//  ADDRESS, через флаг: "-a=<ЗНАЧЕНИЕ>"
 	//  REPORT_INTERVAL, через флаг: "-r=<ЗНАЧЕНИЕ>"
 	//  POLL_INTERVAL, через флаг: "-p=<ЗНАЧЕНИЕ>"
@@ -344,7 +347,7 @@ func main() {
 
 	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostPortStr)
 	if err != nil {
-		fmt.Printf("ERROR: Cannot get IP and PORT value from ADDRESS string (%s). \n", hostPortStr)
+		fmt.Printf("ERROR_ANT: Cannot get IP and PORT value from ADDRESS string (%s). \n", hostPortStr)
 	}
 
 	var pollInterval time.Duration
@@ -368,8 +371,12 @@ func main() {
 	var PollCount int64
 	var rtm runtime.MemStats
 	METRIC_AMOUNT := 29
-	var MetricArray storage.MetricsStorage
-	MetricArray = make(storage.MetricsStorage, METRIC_AMOUNT)
+	var agentMetricArray storage.MetricsStorage
+	agentMetricArray = make(storage.MetricsStorage, METRIC_AMOUNT)
+	for i := 0; i < METRIC_AMOUNT; i++ {
+		agentMetricArray = append(agentMetricArray, storage.NilMetric)
+	}
+	//agentMetricArray = *storage.NewMetricStorage()
 	var cl Client
 	cl.IP = serverIPAddress
 	cl.Port = serverTCPPort
@@ -384,12 +391,12 @@ func main() {
 		if CurTime.Sub(LastPoolTime) > pollInterval {
 			fmt.Printf("PoolTime: %s.\n", string(LastPoolTime.String()))
 			//getMetrics(&MetricArray, &PollCount, &rtm)
-			getMetricsArray(MetricArray, &PollCount, &rtm)
+			getMetricsArray(&agentMetricArray, &PollCount, &rtm)
 			LastPoolTime = time.Now()
 		}
 		if CurTime.Sub(LastReportTime) > reportInterval {
 			fmt.Printf("ReportTime: %s.\n", string(LastReportTime.String()))
-			cl.metricSendingAPI1(MetricArray)
+			cl.metricSendingAPI1(&agentMetricArray)
 			PollCount = 0
 			//cl.metricSendingAPI2(&MetricArray)
 			LastReportTime = time.Now()

@@ -67,7 +67,7 @@ func main() {
 	if isServerKeyValue && envServerKeyValue != "" {
 		serverKeyValue = envServerKeyValue
 	}
-	
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Compress(5))
@@ -94,7 +94,7 @@ func main() {
 		var err error
 		storeIntervalTime, err = time.ParseDuration(storeIntervalStr)
 		if err != nil {
-			fmt.Printf("ERROR: Cannot conver STORE_INTERVAL value (%s) to time. Will be used 0 value. \n",
+			fmt.Printf("ERROR_SRV: Cannot conver STORE_INTERVAL value (%s) to time. Will be used 0 value. \n",
 				storeIntervalStr)
 			storeIntervalTime = 0 * time.Second
 			return
@@ -107,13 +107,12 @@ func main() {
 		WriteTimeout: 30 * time.Second,
 	}
 	s.Handler = r
-
 	var c = make(chan storage.MetricsStorage)
 	if isRestoreBool {
-		storage.RestoreMetricsFromFile(storeFilePathStr, storage.MetStorage)
+		storage.RestoreMetricsFromFile(storeFilePathStr, storage.ServerMetStorage)
 	}
-	_ = storeIntervalTime
-	if storeFilePathStr != "" { // Disabling of storing metrics into the file
+	//_ = storeIntervalTime
+	if storeFilePathStr != "" {
 		go storage.UpdateMetricsInChannel(c)
 		go storage.WriteMetricsToFile(storeFilePathStr, c, storeIntervalTime)
 	}
