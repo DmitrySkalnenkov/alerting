@@ -39,6 +39,30 @@ func (cl Client) metricSendingAPI1(mA *[29][3]string) {
 	}
 }
 
+func (cl Client) metricArraySendingAPI1(mA *storage.MetricsStorage) {
+	curURL := ""
+	for row := 0; row < len(*mA); row++ {
+		switch (*mA)[row].MType {
+		case "gauge":
+			pv := (*mA)[row].Value
+			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%f", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, *pv)
+			fmt.Printf("INFO: SendingRequest by GET method: %s \n", curURL)
+			_, err := cl.sendRequest(curURL)
+			if err != nil {
+				fmt.Printf("ERROR_AGT: sendRequest() error: %v. \n", err)
+			}
+		case "counter":
+			pd := (*mA)[row].Delta
+			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%d", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, *pd)
+			fmt.Printf("INFO: SendingRequest by GET method: %s \n", curURL)
+			_, err := cl.sendRequest(curURL)
+			if err != nil {
+				fmt.Printf("ERROR_AGT: %v. \n", err)
+			}
+		}
+	}
+}
+
 // Sends metrics to server by POST ("application/json") with metric type and value in JSON.
 func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 	curURL := ""
@@ -261,6 +285,41 @@ func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) 
 	fmt.Println(mArray)
 }
 
+func getMetricsArray(mA *storage.MetricsStorage, PollCount *int64, rtm *runtime.MemStats) {
+	runtime.ReadMemStats(rtm)
+	*PollCount = *PollCount + 1
+	RandomValue := float64(rand.Float64())
+	(*mA)[0] = storage.MakeMetric("Alloc", "gauge", strconv.FormatUint(rtm.Alloc, 10))
+	(*mA)[1] = storage.MakeMetric("BuckHashSys", "gauge", strconv.FormatUint(rtm.BuckHashSys, 10))
+	(*mA)[2] = storage.MakeMetric("Frees", "gauge", strconv.FormatUint(rtm.Frees, 10))
+	(*mA)[3] = storage.MakeMetric("GCCPUFraction", "gauge", strconv.FormatFloat(rtm.GCCPUFraction, 'G', -1, 64))
+	(*mA)[4] = storage.MakeMetric("GCSys", "gauge", strconv.FormatUint(rtm.GCSys, 10))
+	(*mA)[5] = storage.MakeMetric("HeapAlloc", "gauge", strconv.FormatUint(rtm.HeapAlloc, 10))
+	(*mA)[6] = storage.MakeMetric("HeapIdle", "gauge", strconv.FormatUint(rtm.HeapIdle, 10))
+	(*mA)[7] = storage.MakeMetric("HeapInuse", "gauge", strconv.FormatUint(rtm.HeapInuse, 10))
+	(*mA)[8] = storage.MakeMetric("HeapObjects", "gauge", strconv.FormatUint(rtm.HeapObjects, 10))
+	(*mA)[9] = storage.MakeMetric("HeapReleased", "gauge", strconv.FormatUint(rtm.HeapReleased, 10))
+	(*mA)[10] = storage.MakeMetric("HeapSys", "gauge", strconv.FormatUint(rtm.HeapSys, 10))
+	(*mA)[11] = storage.MakeMetric("LastGC", "gauge", strconv.FormatUint(rtm.LastGC, 10))
+	(*mA)[12] = storage.MakeMetric("Lookups", "gauge", strconv.FormatUint(rtm.Lookups, 10))
+	(*mA)[13] = storage.MakeMetric("MCacheInuse", "gauge", strconv.FormatUint(rtm.MCacheInuse, 10))
+	(*mA)[14] = storage.MakeMetric("MCacheSys", "gauge", strconv.FormatUint(rtm.MCacheSys, 10))
+	(*mA)[15] = storage.MakeMetric("MSpanInuse", "gauge", strconv.FormatUint(rtm.MSpanInuse, 10))
+	(*mA)[16] = storage.MakeMetric("MSpanSys", "gauge", strconv.FormatUint(rtm.MSpanSys, 10))
+	(*mA)[17] = storage.MakeMetric("Mallocs", "gauge", strconv.FormatUint(rtm.Mallocs, 10))
+	(*mA)[18] = storage.MakeMetric("NextGC", "gauge", strconv.FormatUint(rtm.NextGC, 10))
+	(*mA)[19] = storage.MakeMetric("NumForcedGC", "gauge", strconv.FormatUint(uint64(rtm.NumForcedGC), 10))
+	(*mA)[20] = storage.MakeMetric("NumGC", "gauge", strconv.FormatUint(uint64(rtm.NumGC), 10))
+	(*mA)[21] = storage.MakeMetric("OtherSys", "gauge", strconv.FormatUint(rtm.OtherSys, 10))
+	(*mA)[22] = storage.MakeMetric("PollCount", "counter", strconv.FormatInt(int64(*PollCount), 10))
+	(*mA)[23] = storage.MakeMetric("PauseTotalNs", "gauge", strconv.FormatUint(rtm.PauseTotalNs, 10))
+	(*mA)[24] = storage.MakeMetric("RandomValue", "gauge", strconv.FormatFloat(RandomValue, 'G', -1, 64))
+	(*mA)[25] = storage.MakeMetric("StackInuse", "gauge", strconv.FormatUint(rtm.StackInuse, 10))
+	(*mA)[26] = storage.MakeMetric("StackSys", "gauge", strconv.FormatUint(rtm.StackSys, 10))
+	(*mA)[27] = storage.MakeMetric("Sys", "gauge", strconv.FormatUint(rtm.Sys, 10))
+	(*mA)[28] = storage.MakeMetric("TotalAlloc", "gauge", strconv.FormatUint(rtm.TotalAlloc, 10))
+}
+
 func main() {
 	StartTime := time.Now()
 	fmt.Printf("Start time: %s.\n", string(StartTime.String()))
@@ -278,7 +337,7 @@ func main() {
 	flag.StringVar(&hostPortStr, "a", "127.0.0.1:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080")
 	flag.StringVar(&reportIntervalStr, "r", "10", "Value for -r (REPORT_INTERVAL) flag 'r' should be time in second, example: 10")
 	flag.StringVar(&pollIntervalStr, "p", "2", "Value for -p (POLL_INTERVAL) flag 'p' should be time in second, example: 2")
-	//flag.StringVar(&keyValue, "k", "", "Key value for HMAC-SHA-256 calculation of hash. Should be hexstring, example: 300")
+	//	flag.StringVar(&keyValue, "k", "", "Key value for HMAC-SHA-256 calculation of hash. Should be hexstring, example: 300")
 	flag.Parse()
 	//  ADDRESS (по умолчанию: "127.0.0.1:8080" или "localhost:8080")
 	//  REPORT_INTERVAL (по умолчанию: 10 секунд)
@@ -322,7 +381,13 @@ func main() {
 
 	var PollCount int64
 	var rtm runtime.MemStats
-	var agentMetricArray [29][3]string
+	METRIC_AMOUNT := 29
+	//var agentMetricArray [29][3]string
+	var agentMetricArray storage.MetricsStorage
+	agentMetricArray = make(storage.MetricsStorage, METRIC_AMOUNT)
+	for i := 0; i < METRIC_AMOUNT; i++ {
+		agentMetricArray = append(agentMetricArray, storage.NilMetric)
+	}
 	var cl Client
 	cl.IP = serverIPAddress
 	cl.Port = serverTCPPort
@@ -336,12 +401,14 @@ func main() {
 		CurTime = time.Now()
 		if CurTime.Sub(LastPoolTime) > pollInterval {
 			fmt.Printf("PoolTime: %s.\n", string(LastPoolTime.String()))
-			getMetrics(&agentMetricArray, &PollCount, &rtm)
+			//getMetrics(&agentMetricArray, &PollCount, &rtm)
+			getMetricsArray(&agentMetricArray, &PollCount, &rtm)
 			LastPoolTime = time.Now()
 		}
 		if CurTime.Sub(LastReportTime) > reportInterval {
 			fmt.Printf("ReportTime: %s.\n", string(LastReportTime.String()))
-			cl.metricSendingAPI1(&agentMetricArray)
+			//cl.metricSendingAPI1(&agentMetricArray)
+			cl.metricArraySendingAPI1(&agentMetricArray)
 			PollCount = 0
 			//cl.metricSendingAPI2(&MetricArray)
 			LastReportTime = time.Now()
