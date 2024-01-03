@@ -23,14 +23,15 @@ type Client struct {
 	Client *http.Client
 }
 
-// Sends metrics to server by GET and value of metric in URL -- /update/{gauge|counter}/[MetricName]/[MetricValue]
+// Sends metrics to server by POST ("plain/text"). Metric type and value in URL -- /update/{gauge|counter}/[MetricName]/[MetricValue]
 func (cl Client) metricSendingAPI1(mA *[29][3]string) {
 	curURL := ""
 	for row := 0; row < len(mA); row++ {
 		if mA[row][0] != "" {
 			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
 			fmt.Printf("SendingRequest by GET method: http://%s:%s/update/%s/%s/%s \n", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
-			_, err := cl.sendRequest(curURL)
+			//_, err := cl.sendRequest(curURL)
+			_, err := cl.sendPostRequest(curURL) //POST, "plain/text"
 			if err != nil {
 				fmt.Printf("ERROR: %v. \n", err)
 			}
@@ -38,7 +39,7 @@ func (cl Client) metricSendingAPI1(mA *[29][3]string) {
 	}
 }
 
-// Sends metrics to server
+// Sends metrics to server by POST ("application/json") with metric type and value in JSON.
 func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 	curURL := ""
 	var curMetric storage.Metrics
@@ -61,7 +62,6 @@ func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 				curMetric.Delta = storage.PointOf(int64(d))
 			default:
 				fmt.Printf("ERROR: Wrong metric type. It must be `gauge` or `counter`")
-
 			}
 			curURL = fmt.Sprintf("http://%s:%s/update/", cl.IP, cl.Port)
 			fmt.Printf("DEBUG: For sending. curMetric.ID = %v, curMetric.MType = %v, curMetric.Value = %v, curMetric.Delta = %v. \n",
@@ -74,7 +74,7 @@ func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 	}
 }
 
-// Send request by plain text by GET method
+//Sends request by plain text by GET method
 func (cl Client) sendRequest(curURL string) (string, error) {
 	request, err := http.NewRequest(http.MethodGet, curURL, nil)
 	//request.Header.Set("Content-Type", "text/plain")
@@ -92,6 +92,24 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 	return string(response.Status), nil
 }
 
+//Sends POST request with content type "plain/text"
+func (cl Client) sendPostRequest(curURL string) (string, error) {
+	request, err := http.NewRequest(http.MethodPost, curURL, nil)
+	if err != nil {
+		fmt.Printf("ERROR: Error value is %v.\n", err)
+		return "", err
+	}
+	request.Header.Set("Content-Type", "plain/text")
+	response, err := cl.Client.Do(request)
+	if err != nil {
+		fmt.Printf("ERROR: Error value is  %v. Response is  %v \n", err, response)
+		return "", err
+	}
+	defer response.Body.Close()
+	fmt.Printf("Response status code: %s.\n", response.Status)
+	return string(response.Status), nil
+}
+
 // Sends request by POST method with content type "application/json"
 func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error) {
 	payloadBuf := new(bytes.Buffer)
@@ -101,24 +119,18 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 		return "", err
 	}
 	request, err := http.NewRequest(http.MethodPost, curURL, payloadBuf)
-	fmt.Printf("DEBUG: request is %v.\n", request)
+	fmt.Printf("DEBUG: Request is %v.\n", request)
 	if err != nil {
 		fmt.Printf("ERROR: %s.\n", err)
 		return "", err
 	}
 	request.Header.Set("Content-Type", "application/json")
-	//txJSON, err := json.Marshal(m)
-	//if err != nil {
-	//	fmt.Printf("ERROR: %s.\n", err)
-	//	return "", err
-	//}
 	response, err := cl.Client.Do(request)
 	if err != nil {
 		fmt.Printf("ERROR: Error value is  %v. Response is  %v \n", err, response)
 		return "", err
 	}
 	defer response.Body.Close()
-
 	fmt.Printf("Response status code: %s.\n", response.Status)
 	return string(response.Status), nil
 }
@@ -128,7 +140,6 @@ func getMetrics(mArray *[29][3]string, PollCount *int64, rtm *runtime.MemStats) 
 	runtime.ReadMemStats(rtm)
 	*PollCount = *PollCount + 1
 	RandomValue := float64(rand.Float64())
-
 	//1
 	mArray[0][0] = "Alloc"
 	mArray[0][1] = "gauge"
@@ -256,7 +267,6 @@ func main() {
 	var CurTime time.Time
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
-
 	//  ADDRESS, через флаг: "-a=<ЗНАЧЕНИЕ>"
 	//  REPORT_INTERVAL, через флаг: "-r=<ЗНАЧЕНИЕ>"
 	//  POLL_INTERVAL, через флаг: "-p=<ЗНАЧЕНИЕ>"
@@ -267,7 +277,6 @@ func main() {
 	flag.StringVar(&reportIntervalStr, "r", "10", "Value for -r (REPORT_INTERVAL) flag 'r' should be time in second, example: 10")
 	flag.StringVar(&pollIntervalStr, "p", "2", "Value for -p (POLL_INTERVAL) flag 'p' should be time in second, example: 2")
 	flag.Parse()
-
 	//  ADDRESS (по умолчанию: "127.0.0.1:8080" или "localhost:8080")
 	//  REPORT_INTERVAL (по умолчанию: 10 секунд)
 	//  POLL_INTERVAL (по умолчанию: 2 секунды)
@@ -283,33 +292,26 @@ func main() {
 	if isEnvPollInterval && envPollIntervalStr != "" {
 		reportIntervalStr = envReportIntervalStr
 	}
-
 	//hostportStr := auxiliary.GetParamValue("ADDRESS", "a", "localhost:8080", "Flag 'a' value should be in 'IP:PORT' format")
 	hostPortStr = auxiliary.TrimQuotes(hostPortStr)
-
 	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostPortStr)
 	if err != nil {
 		fmt.Printf("ERROR: Cannot get IP and PORT value from ADDRESS string (%s). \n", hostPortStr)
 	}
-
 	var pollInterval time.Duration
 	pollValue, err := strconv.Atoi(pollIntervalStr)
 	if err == nil {
 		pollInterval = time.Duration(pollValue) * time.Second
 	}
-
 	var reportInterval time.Duration
 	reportValue, err := strconv.Atoi(reportIntervalStr)
 	if err == nil {
 		reportInterval = time.Duration(reportValue) * time.Second
 	}
-
 	fmt.Printf("DEBUG: PollInterval is %s.\n", pollInterval)
 	fmt.Printf("DEBUG: ReportInterval is %s.\n", reportInterval)
-
 	baseURL := fmt.Sprintf("http://%s:%s", serverIPAddress, serverTCPPort)
 	fmt.Printf("DEBUG: BaseURL is %s.\n", baseURL)
-
 	var PollCount int64
 	var rtm runtime.MemStats
 	var MetricArray [29][3]string
