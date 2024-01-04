@@ -63,7 +63,7 @@ func MakeMetric(id string, mType string, mData string) Metrics {
 		N.MType = mType
 		v, err := strconv.ParseFloat(mData, 64)
 		if err != nil {
-			fmt.Printf("ERROR: Cannot convert data value to float. Will be used nil metric.")
+			fmt.Printf("ERROR[S]: Cannot convert data value to float. Will be used nil metric.")
 			return NilMetric
 		}
 		N.Value = PointOf(v)
@@ -74,7 +74,7 @@ func MakeMetric(id string, mType string, mData string) Metrics {
 		N.MType = mType
 		d, err := strconv.ParseInt(mData, 10, 64)
 		if err != nil {
-			fmt.Printf("ERROR: Cannot convert data value to int. Will be used nil metric.")
+			fmt.Printf("ERROR[S]: Cannot convert data value to int. Will be used nil metric.")
 			return NilMetric
 		}
 		N.Delta = PointOf(d)
@@ -82,7 +82,7 @@ func MakeMetric(id string, mType string, mData string) Metrics {
 		N.Hash = HmacSha256(StringToHexStr(dataStr), AgentKeyHexStr)
 		return N
 	default:
-		fmt.Printf("ERROR: Wrong metric type value. Must be 'counter' or 'gague'. Will be used nil metric\n")
+		fmt.Printf("ERROR[S]: Wrong metric type value. Must be 'counter' or 'gague'. Will be used nil metric\n")
 		return NilMetric
 	}
 }
@@ -100,7 +100,7 @@ func SetEncKey(keyVal string) string {
 	if isHexString(keyVal) {
 		return keyVal
 	} else {
-		fmt.Printf("WARN: Key value (%s) can't convert into hex. Hash calculation will be disabled.", keyVal)
+		fmt.Printf("WARN[S]: Key value (%s) can't convert into hex. Hash calculation will be disabled.", keyVal)
 		return ""
 	}
 }
@@ -111,12 +111,12 @@ func HmacSha256(dataHexStr string, keyHexStr string) string {
 	var err error
 	keyBin, err = hex.DecodeString(keyHexStr)
 	if err != nil {
-		fmt.Printf("ERROR: Cannot convert key {%s} into hex string.\n", keyHexStr)
+		fmt.Printf("ERROR[S]: Cannot convert key {%s} into hex string.\n", keyHexStr)
 		return ""
 	}
 	dataBin, err = hex.DecodeString(dataHexStr)
 	if err != nil {
-		fmt.Printf("ERROR: Cannot convert data {%s} into hex string.\n", dataHexStr)
+		fmt.Printf("ERROR[S]: Cannot convert data {%s} into hex string.\n", dataHexStr)
 		return ""
 	}
 	hmac256 := hmac.New(sha256.New, keyBin)
@@ -160,7 +160,7 @@ func (pm *MetricsStorage) GetMetric(metricID string, metricType string) Metrics 
 			return (*pm)[i]
 		}
 	}
-	fmt.Printf("DEBUG: MetricName %v with type %v not found.\n", metricID, metricType)
+	fmt.Printf("DEBUG[S]: MetricName %v with type %v not found.\n", metricID, metricType)
 	return NilMetric
 }
 
@@ -214,22 +214,22 @@ func RestoreMetricsFromFile(fileStoragePath string, ms *MetricsStorage) {
 	if fileStoragePath != "" {
 		fileMetricStorage, err := os.OpenFile(fileStoragePath, os.O_RDONLY|os.O_CREATE, 0777)
 		if err != nil {
-			fmt.Printf("ERROR: Cannot open file '%s'.\n", fileStoragePath)
+			fmt.Printf("ERROR[S]: Cannot open file '%s'.\n", fileStoragePath)
 			log.Fatal(err)
 		}
 		defer fileMetricStorage.Close()
 		fromFile, err := io.ReadAll(fileMetricStorage)
 		if err != nil {
-			fmt.Printf("ERROR: Cannot read file '%s'.\n", fileStoragePath)
+			fmt.Printf("ERROR[S]: Cannot read file '%s'.\n", fileStoragePath)
 			log.Fatal(err)
 		}
 		var tmp MetricsStorage
 		err = json.Unmarshal(fromFile, &tmp)
 		if err == nil {
-			fmt.Printf("INFO: Metrics from file were restored succesfully.\n")
+			fmt.Printf("INFO[S]: Metrics from file were restored succesfully.\n")
 			*ms = tmp
 		} else {
-			fmt.Printf("ERROR: %s. Metrics cannot be restored.\n", err)
+			fmt.Printf("ERROR[S]: %s. Metrics cannot be restored.\n", err)
 			ms = NewMetricStorage()
 		}
 	}
@@ -239,22 +239,22 @@ func RestoreMetricsFromFile(fileStoragePath string, ms *MetricsStorage) {
 func WriteMetricsToFile(filePath string, ch chan MetricsStorage, st time.Duration) {
 	fileMetricStorage, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777)
 	if err != nil {
-		fmt.Printf("ERROR: Cannot open file '%s'.\n", filePath)
+		fmt.Printf("ERROR[S]: Cannot open file '%s'.\n", filePath)
 		log.Fatal(err)
 	}
 	defer fileMetricStorage.Close()
 	for {
 		curMetricStorage := <-ch
-		//fmt.Printf("DEBUG: Current metric string is '%s'.\n", curMetricStorage)
+		//fmt.Printf("DEBUG[S]: Current metric string is '%s'.\n", curMetricStorage)
 		if len(curMetricStorage) > 0 {
 			toFile, _ := json.Marshal(curMetricStorage)
 			fileMetricStorage.Truncate(0)
 			fileMetricStorage.Seek(0, 0)
 			_, err := fileMetricStorage.WriteString(string(toFile))
 			if err == nil {
-				fmt.Printf("INFO: Metrics from the server were dumped to the file.\n")
+				fmt.Printf("INFO[S]: Metrics from the server were dumped to the file.\n")
 			} else {
-				fmt.Printf("ERROR: %s.\n", err)
+				fmt.Printf("ERROR[S]: %s.\n", err)
 				return
 			}
 		}
@@ -288,7 +288,7 @@ func (m MemStorage) PushGauge(metricName string, value float64) {
 func (m MemStorage) PopGauge(metricName string) float64 {
 	_, ok := m.Gauges[metricName]
 	if ok {
-		//fmt.Printf("DEBUG: Gauge metric with name %v is found.\n", metricName)
+		//fmt.Printf("DEBUG[S]: Gauge metric with name %v is found.\n", metricName)
 		return m.Gauges[metricName]
 	} else {
 		//fmt.Printf("DEBUG: Gauge metric with name %v is not found.\n", metricName)
@@ -308,10 +308,10 @@ func (m MemStorage) PushCounter(metricName string, value int64) {
 func (m MemStorage) PopCounter(metricName string) int64 {
 	_, ok := m.Counters[metricName]
 	if ok {
-		//fmt.Printf("DEBUG: Counter metric with name %v is found.\n", metricName)
+		//fmt.Printf("DEBUG[S]: Counter metric with name %v is found.\n", metricName)
 		return m.Counters[metricName]
 	} else {
-		//fmt.Printf("DEBUG: Counter metric with name  %s is not found.\n", metricName)
+		//fmt.Printf("DEBUG[S]: Counter metric with name  %s is not found.\n", metricName)
 		return 0
 	}
 }

@@ -29,11 +29,11 @@ func (cl Client) metricSendingAPI1(mA *[29][3]string) {
 	for row := 0; row < len(mA); row++ {
 		if mA[row][0] != "" {
 			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
-			fmt.Printf("SendingRequest by GET method: http://%s:%s/update/%s/%s/%s \n", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
+			fmt.Printf("INFO[A]: SendingRequest by POST ('plain/text') method: http://%s:%s/update/%s/%s/%s \n", cl.IP, cl.Port, mA[row][1], mA[row][0], mA[row][2])
 			//_, err := cl.sendRequest(curURL)
 			_, err := cl.sendPostRequest(curURL) //POST, "plain/text"
 			if err != nil {
-				fmt.Printf("ERROR: %v. \n", err)
+				fmt.Printf("ERROR[A]: %v. \n", err)
 			}
 		}
 	}
@@ -45,19 +45,19 @@ func (cl Client) metricArraySendingAPI1(mA *storage.MetricsStorage) {
 		switch (*mA)[row].MType {
 		case "gauge":
 			pv := (*mA)[row].Value
-			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%f", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, *pv)
-			fmt.Printf("INFO: SendingRequest by GET method: %s \n", curURL)
-			_, err := cl.sendRequest(curURL)
+			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%.0f", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, *pv)
+			fmt.Printf("INFO[A]: metricArraySendingAPI1(), URL is: %s \n", curURL)
+			_, err := cl.sendPostRequest(curURL)
 			if err != nil {
-				fmt.Printf("ERROR_AGT: sendRequest() error: %v. \n", err)
+				fmt.Printf("ERROR[A]: sendPostRequest() error -- %v. \n", err)
 			}
 		case "counter":
 			pd := (*mA)[row].Delta
 			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%d", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, *pd)
-			fmt.Printf("INFO: SendingRequest by GET method: %s \n", curURL)
-			_, err := cl.sendRequest(curURL)
+			fmt.Printf("INFO[A]: metricArraySendingAPI1(), URL is: %s \n", curURL)
+			_, err := cl.sendPostRequest(curURL)
 			if err != nil {
-				fmt.Printf("ERROR_AGT: %v. \n", err)
+				fmt.Printf("ERROR[A]: %v. \n", err)
 			}
 		}
 	}
@@ -81,29 +81,29 @@ func (cl Client) metricSendingAPI2(mA *[29][3]string) {
 			case "counter":
 				d, err := strconv.ParseInt(mA[row][2], 10, 64)
 				if err != nil {
-					fmt.Printf("ERROR_ANT: Error of converting string %v to int64", mA[row][2])
+					fmt.Printf("ERROR[A]: Error of converting string %v to int64", mA[row][2])
 				}
 				curMetric.Delta = storage.PointOf(int64(d))
 			default:
-				fmt.Printf("ERROR: Wrong metric type. It must be `gauge` or `counter`")
+				fmt.Printf("ERROR[A]: Wrong metric type. It must be `gauge` or `counter`")
 			}
 			curURL = fmt.Sprintf("http://%s:%s/update/", cl.IP, cl.Port)
-			fmt.Printf("DEBUG: For sending. curMetric.ID = %v, curMetric.MType = %v, curMetric.Value = %v, curMetric.Delta = %v. \n",
+			fmt.Printf("DEBUG[A]: For sending. curMetric.ID = %v, curMetric.MType = %v, curMetric.Value = %v, curMetric.Delta = %v. \n",
 				curMetric.ID, curMetric.MType, curMetric.Value, curMetric.Delta)
 			_, err := cl.sendJSONMetric(curURL, curMetric)
 			if err != nil {
-				fmt.Printf("ERROR_ANT: %v.\n", err)
+				fmt.Printf("ERROR[A]: %v.\n", err)
 			}
 		}
 	}
 }
 
-//Sends request by plain text by GET method
+// Sends request by plain text by GET method
 func (cl Client) sendRequest(curURL string) (string, error) {
 	request, err := http.NewRequest(http.MethodGet, curURL, nil)
 	//request.Header.Set("Content-Type", "text/plain")
 	if err != nil {
-		//fmt.Printf("ERROR_ANT: %s.\n", err)
+		//fmt.Printf("ERROR[A]: %s.\n", err)
 		return "", err
 	}
 	response, err := cl.Client.Do(request)
@@ -112,25 +112,25 @@ func (cl Client) sendRequest(curURL string) (string, error) {
 		return "", err
 	}
 	defer response.Body.Close()
-	fmt.Printf("INFO: Response status code: %s.\n", response.Status)
+	fmt.Printf("INFO[A]: Response status code: %s.\n", response.Status)
 	return string(response.Status), nil
 }
 
-//Sends POST request with content type "plain/text"
+// Sends POST request with content type "plain/text"
 func (cl Client) sendPostRequest(curURL string) (string, error) {
 	request, err := http.NewRequest(http.MethodPost, curURL, nil)
 	if err != nil {
-		fmt.Printf("ERROR: Error value is %v.\n", err)
+		fmt.Printf("ERROR[A]: Error value is %v.\n", err)
 		return "", err
 	}
 	request.Header.Set("Content-Type", "plain/text")
 	response, err := cl.Client.Do(request)
 	if err != nil {
-		fmt.Printf("ERROR: Error value is  %v. Response is  %v \n", err, response)
+		fmt.Printf("ERROR[A]: Error value is  %v. Response is  %v \n", err, response)
 		return "", err
 	}
 	defer response.Body.Close()
-	fmt.Printf("Response status code: %s.\n", response.Status)
+	fmt.Printf("DEBUG[A]: Response status code: %s.\n", response.Status)
 	return string(response.Status), nil
 }
 
@@ -139,23 +139,23 @@ func (cl Client) sendJSONMetric(curURL string, m storage.Metrics) (string, error
 	payloadBuf := new(bytes.Buffer)
 	err := json.NewEncoder(payloadBuf).Encode(m)
 	if err != nil {
-		fmt.Printf("ERROR_ANT: Error value is  %v.\n", err)
+		fmt.Printf("ERROR[A]: Error value is  %v.\n", err)
 		return "", err
 	}
 	request, err := http.NewRequest(http.MethodPost, curURL, payloadBuf)
-	fmt.Printf("DEBUG: Request is %v.\n", request)
+	fmt.Printf("DEBUG[A]: Request is %v.\n", request)
 	if err != nil {
-		fmt.Printf("ERROR_ANT: %s.\n", err)
+		fmt.Printf("ERROR[A]: %s.\n", err)
 		return "", err
 	}
 	request.Header.Set("Content-Type", "application/json")
 	response, err := cl.Client.Do(request)
 	if err != nil {
-		fmt.Printf("ERROR_ANT: Error value is  %v. Response is  %v \n", err, response)
+		fmt.Printf("ERROR[A]: Error value is  %v. Response is  %v \n", err, response)
 		return "", err
 	}
 	defer response.Body.Close()
-	fmt.Printf("Response status code: %s.\n", response.Status)
+	fmt.Printf("DEBUG[A]: Response status code: %s.\n", response.Status)
 	return string(response.Status), nil
 }
 
@@ -360,7 +360,7 @@ func main() {
 	hostPortStr = auxiliary.TrimQuotes(hostPortStr)
 	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostPortStr)
 	if err != nil {
-		fmt.Printf("ERROR_ANT: Cannot get IP and PORT value from ADDRESS string (%s). \n", hostPortStr)
+		fmt.Printf("ERROR[A]: Cannot get IP and PORT value from ADDRESS string (%s). \n", hostPortStr)
 	}
 	var pollInterval time.Duration
 	pollValue, err := strconv.Atoi(pollIntervalStr)
@@ -373,13 +373,14 @@ func main() {
 		reportInterval = time.Duration(reportValue) * time.Second
 	}
 
-	fmt.Printf("DEBUG: PollInterval is %s.\n", pollInterval)
-	fmt.Printf("DEBUG: ReportInterval is %s.\n", reportInterval)
+	fmt.Printf("DEBUG[A]: PollInterval is %s.\n", pollInterval)
+	fmt.Printf("DEBUG[A]: ReportInterval is %s.\n", reportInterval)
 
 	baseURL := fmt.Sprintf("http://%s:%s", serverIPAddress, serverTCPPort)
-	fmt.Printf("DEBUG: BaseURL is %s.\n", baseURL)
+	fmt.Printf("DEBUG[A]: BaseURL is %s.\n", baseURL)
 
 	var PollCount int64
+	PollCount = 0
 	var rtm runtime.MemStats
 	METRIC_AMOUNT := 29
 	//var agentMetricArray [29][3]string
@@ -395,21 +396,20 @@ func main() {
 	cl.Client.Timeout = 1 * time.Second
 	transport := &http.Transport{}
 	transport.MaxIdleConns = 20
-	transport.IdleConnTimeout = 1 * time.Second
+	transport.IdleConnTimeout = 5 * time.Second
 	cl.Client.Transport = transport
 	for {
 		CurTime = time.Now()
 		if CurTime.Sub(LastPoolTime) > pollInterval {
-			fmt.Printf("PoolTime: %s.\n", string(LastPoolTime.String()))
+			fmt.Printf("INFO[A]: PoolTime: %s.\n", string(LastPoolTime.String()))
 			//getMetrics(&agentMetricArray, &PollCount, &rtm)
 			getMetricsArray(&agentMetricArray, &PollCount, &rtm)
 			LastPoolTime = time.Now()
 		}
 		if CurTime.Sub(LastReportTime) > reportInterval {
-			fmt.Printf("ReportTime: %s.\n", string(LastReportTime.String()))
+			fmt.Printf("INFO[A]: ReportTime: %s.\n", string(LastReportTime.String()))
 			//cl.metricSendingAPI1(&agentMetricArray)
 			cl.metricArraySendingAPI1(&agentMetricArray)
-			PollCount = 0
 			//cl.metricSendingAPI2(&MetricArray)
 			LastReportTime = time.Now()
 		}

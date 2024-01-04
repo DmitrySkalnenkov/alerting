@@ -45,12 +45,12 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		var curMetric storage.Metrics
 		err := decoder.Decode(&curMetric)
 		if err != nil {
-			log.Printf("ERROR_SRV: JSON decoding error occured, %s. \n", err)
+			log.Printf("ERROR[S]: JSON decoding error occured, %s. \n", err)
 			return
 		}
 		if (curMetric.MType == "gauge" || curMetric.MType == "counter") && curMetric.ID != "" {
 			w.WriteHeader(http.StatusOK)
-			fmt.Printf("DEBUG: Metric %v was stored into the storage.\n", curMetric)
+			fmt.Printf("DEBUG[S]: Metric %v was stored into the storage.\n", curMetric)
 			storage.ServerMetStorage.SetMetric(curMetric)
 		} else {
 			NotImplementedHandler(w, r)
@@ -75,7 +75,7 @@ func ValueHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if (curMetric.MType == "gauge" || curMetric.MType == "counter") && curMetric.ID != "" {
-			//fmt.Printf("DEBUG: Get metric struct from request %v.\n", curMetric)
+			//fmt.Printf("DEBUG[S]: Get metric struct from request %v.\n", curMetric)
 			m := storage.ServerMetStorage.GetMetric(curMetric.ID, curMetric.MType)
 			if !storage.IsMetricsEqual(m, storage.NilMetric) {
 				switch curMetric.MType {
@@ -116,7 +116,7 @@ func ValueHandler(w http.ResponseWriter, r *http.Request) {
 // /update/gauge then status -- BadRequest (400)
 func GaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
-	fmt.Printf("DEBUG: Gauge handler. URL is %s.\n", string(urlPath))
+	fmt.Printf("DEBUG[S]: Gauge handler. URL is %s.\n", string(urlPath))
 	matched, err := regexp.MatchString(`/update/gauge/[A-Za-z0-9]+/[0-9.-]+$`, urlPath)
 	if matched && (err == nil) {
 		curMetric := *storage.NewMetric()
@@ -126,24 +126,24 @@ func GaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 		var v float64
 		v, err = strconv.ParseFloat(pathSlice[4], 64)
 		*curMetric.Value = v
-		fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", curMetric.ID, *curMetric.Value)
+		fmt.Printf("DEBUG[S]: Metric name matched. MetricName is %s, MetricValue is %v.\n", curMetric.ID, *curMetric.Value)
 		if err == nil {
 			w.WriteHeader(http.StatusOK)
 			storage.ServerMetStorage.SetMetric(curMetric)
 			//storage.Mstorage.PushGauge(mName, mValue)
 			//fmt.Printf("DEBUG: Mstorage gauges is %v.\n", storage.Mstorage.Gauges)
-			//io.WriteString(w, "DEBUG: Hello from gauge handler (Status OK).\n")
+			//io.WriteString(w, "DEBUG[S]: Hello from gauge handler (Status OK).\n")
 		} else {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			_, err = io.WriteString(w, fmt.Sprintf("ERROR_SRV: Value parsing error. %s.\n", err))
 			if err != nil {
 				//log.Fatal(err)
-				log.Printf("ERROR_SRV: WriteString error occured, %s. \n", err)
+				log.Printf("ERROR[S]: WriteString error occured, %s. \n", err)
 			}
 		}
 	} else if (err == nil) && (urlPath == "/update/gauge/") {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		//fmt.Printf("DEBUG: URL is %s.\n", r.URL.Path)
+		//fmt.Printf("DEBUG[S]: URL is %s.\n", r.URL.Path)
 		//io.WriteString(w, "DEBUG: Hello from gauge handler (Status Not Found). \n")
 	} else {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -155,7 +155,7 @@ func GaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 // Handler for updating counter value. GET request
 func CounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
-	fmt.Printf("DEBUG: Counter handler. URL is %s.\n", string(urlPath))
+	fmt.Printf("DEBUG[S]: Counter handler. URL is %s.\n", string(urlPath))
 	matched, err := regexp.MatchString(`/update/counter/[A-Za-z0-9]+/[0-9-]+$`, urlPath)
 	if matched && (err == nil) {
 		curMetric := *storage.NewMetric()
@@ -165,7 +165,7 @@ func CounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 		var d int64
 		d, err = strconv.ParseInt(pathSlice[4], 10, 64)
 		*curMetric.Delta = d
-		fmt.Printf("DEBUG: Metric name matched. MetricName is %s, MetricValue is %v.\n", curMetric.ID, *curMetric.Delta)
+		fmt.Printf("DEBUG[S]: Metric name matched. MetricName is %s, MetricValue is %v.\n", curMetric.ID, *curMetric.Delta)
 		if err == nil {
 			w.WriteHeader(http.StatusOK)
 			storage.ServerMetStorage.SetMetric(curMetric)
@@ -176,7 +176,7 @@ func CounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 			_, err = io.WriteString(w, fmt.Sprintf("Value parsing error. %s.\n", err))
 			if err != nil {
 				//log.Fatal(err)
-				log.Printf("ERROR_SRV: WriteString error occured, %s. \n", err)
+				log.Printf("ERROR[S]: WriteString error occured, %s. \n", err)
 			}
 		}
 	} else if (err == nil) && (urlPath == "/update/counter/") {
@@ -193,22 +193,22 @@ func CounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 // Handler for getting gauge value
 func GetGaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
-	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
+	//fmt.Printf("DEBUG[S]: URL is : %s.\n", urlPath)
 	matched, err := regexp.MatchString(`/value/gauge/[A-Za-z0-9]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
-		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
+		//fmt.Printf("DEBUG[S]: MemStorage map is %v.\n", storage.Mstorage.Gauges)
 		curMetric := storage.ServerMetStorage.GetMetric(curMetricName, "gauge")
 		if curMetric != storage.NilMetric {
-			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
+			//fmt.Printf("DEBUG[S]: Value for %s is %v.\n", curMetricName, curMetricValue)
 			//w.Header().Set("Content-Type", "plain/text")
 			w.WriteHeader(http.StatusOK)
 			io.WriteString(w, fmt.Sprintf("%v", *(curMetric.Value)))
-			fmt.Printf("DEBUG: Value of curMetric  is %v:\n", *(curMetric.Value))
+			fmt.Printf("DEBUG[S]: Value of curMetric  is %v:\n", *(curMetric.Value))
 		} else {
 			//w.Header().Set("Content-Type", "plain/text")
 			w.WriteHeader(http.StatusNotFound)
-			fmt.Printf("DEBUG: Value of curMetric  is not found")
+			fmt.Printf("DEBUG[S]: Value of curMetric  is not found")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	}
@@ -217,18 +217,18 @@ func GetGaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 // Handler for getting counter value
 func GetCounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
-	//fmt.Printf("DEBUG: URL is : %s.\n", urlPath)
+	//fmt.Printf("DEBUG[S]: URL is : %s.\n", urlPath)
 	matched, err := regexp.MatchString(`/value/counter/[A-Za-z0-9]+`, urlPath)
 	if matched && (err == nil) {
 		curMetricName := chi.URLParam(r, "MetricName")
-		//fmt.Printf("DEBUG: MemStorage map is %v.\n", storage.Mstorage.Gauges)
+		//fmt.Printf("DEBUG[S]: MemStorage map is %v.\n", storage.Mstorage.Gauges)
 		curMetric := storage.ServerMetStorage.GetMetric(curMetricName, "counter")
 		if curMetric != storage.NilMetric {
-			//fmt.Printf("DEBUG: Value for %s is %v.\n", curMetricName, curMetricValue)
+			//fmt.Printf("DEBUG[S]: Value for %s is %v.\n", curMetricName, curMetricValue)
 			//w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusOK)
 			io.WriteString(w, fmt.Sprintf("%v", *(curMetric.Delta)))
-			fmt.Printf("DEBUG: Value of curMetric  is %v:\n", *(curMetric.Delta))
+			fmt.Printf("DEBUG[S]: Value of curMetric  is %v:\n", *(curMetric.Delta))
 		} else {
 			//w.Header().Set("Content-Type", "text/plain")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -269,10 +269,10 @@ func GetAllMetricsHandlerAPI15(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	for i := range *storage.ServerMetStorage {
 		if ((*storage.ServerMetStorage)[i].MType) == "gauge" {
-			fmt.Printf("DEBUG: %v. %v:%v\n", i, (*storage.ServerMetStorage)[i].ID, *(*storage.ServerMetStorage)[i].Value)
+			fmt.Printf("DEBUG[S]: %v. %v:%v\n", i, (*storage.ServerMetStorage)[i].ID, *(*storage.ServerMetStorage)[i].Value)
 			io.WriteString(w, fmt.Sprintf("%v - %v\n", (*storage.ServerMetStorage)[i].ID, *(*storage.ServerMetStorage)[i].Value))
 		} else if ((*storage.ServerMetStorage)[i].MType) == "counter" {
-			fmt.Printf("DEBUG: %v. %v:%v\n", i, (*storage.ServerMetStorage)[i].ID, *(*storage.ServerMetStorage)[i].Delta)
+			fmt.Printf("DEBUG[S]: %v. %v:%v\n", i, (*storage.ServerMetStorage)[i].ID, *(*storage.ServerMetStorage)[i].Delta)
 			io.WriteString(w, fmt.Sprintf("%v - %v\n", (*storage.ServerMetStorage)[i].ID, *(*storage.ServerMetStorage)[i].Delta))
 		}
 	}

@@ -26,7 +26,7 @@ func main() {
 	var storeIntervalStr string
 	var storeFilePathStr string
 	var serverKeyValue string
-	flag.StringVar(&hostPortStr, "a", "localhost:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080")
+	flag.StringVar(&hostPortStr, "a", "127.0.0.1:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080")
 	flag.BoolVar(&isRestoreBool, "r", true, "Value for -r (RESTORE)  should be 'true' of 'false'")
 	flag.StringVar(&storeIntervalStr, "i", "300s", "Value for -i (STORE_INTERVAL) flag 'r' should be time in second, example: 300")
 	//flag.StringVar(&storeFilePathStr, "f", "/tmp/devops-metrics-db.json", "Store file path should be "+
@@ -78,8 +78,8 @@ func main() {
 	r.Post("/", handlers.GetAllMetricsHandlerAPI2)
 	r.Post("/update/", handlers.UpdateHandler)
 	r.Post("/value/", handlers.ValueHandler)
-	r.Get("/update/gauge/*", handlers.GaugeHandlerAPI1)
-	r.Get("/update/counter/*", handlers.CounterHandlerAPI1)
+	//r.Get("/update/gauge/*", handlers.GaugeHandlerAPI1)
+	//r.Get("/update/counter/*", handlers.CounterHandlerAPI1)
 	r.Post("/update/gauge/*", handlers.GaugeHandlerAPI1)
 	r.Post("/update/counter/*", handlers.CounterHandlerAPI1)
 	r.Post("/update/*", handlers.NotImplementedHandler)
@@ -96,7 +96,7 @@ func main() {
 		var err error
 		storeIntervalTime, err = time.ParseDuration(storeIntervalStr)
 		if err != nil {
-			fmt.Printf("ERROR_SRV: Cannot conver STORE_INTERVAL value (%s) to time. Will be used 0 value. \n",
+			fmt.Printf("ERROR[S]: Cannot conver STORE_INTERVAL value (%s) to time. Will be used 0 value. \n",
 				storeIntervalStr)
 			storeIntervalTime = 0 * time.Second
 			return
@@ -105,8 +105,9 @@ func main() {
 
 	s := &http.Server{
 		Addr:         hostPortStr,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  30 * time.Second,
 	}
 	s.Handler = r
 	var c = make(chan storage.MetricsStorage)
