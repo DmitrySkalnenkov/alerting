@@ -45,7 +45,8 @@ func (cl Client) metricArraySendingAPI1(mA *storage.MetricsStorage) {
 		switch (*mA)[row].MType {
 		case "gauge":
 			pv := (*mA)[row].Value
-			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%.0f", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, *pv)
+			sv := strconv.FormatFloat(*pv, 'f', 0, 64)
+			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, sv)
 			fmt.Printf("INFO[A]: metricArraySendingAPI1(), URL is: %s \n", curURL)
 			_, err := cl.sendPostRequest(curURL)
 			if err != nil {
@@ -53,7 +54,8 @@ func (cl Client) metricArraySendingAPI1(mA *storage.MetricsStorage) {
 			}
 		case "counter":
 			pd := (*mA)[row].Delta
-			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%d", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, *pd)
+			sd := strconv.FormatInt(*pd, 10)
+			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, sd)
 			fmt.Printf("INFO[A]: metricArraySendingAPI1(), URL is: %s \n", curURL)
 			_, err := cl.sendPostRequest(curURL)
 			if err != nil {
