@@ -129,7 +129,7 @@ func TestSendJSONMetric(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := cl.sendJSONMetric(tt.input.url, tt.input.metric)
+			res, err := cl.sendJsonPostRequest(tt.input.url, tt.input.metric)
 			if (res != tt.wantResponse) || (err != nil) {
 				//fmt.Printf("Error message is '%s'\n", err)
 				if !strings.Contains(err.Error(), tt.wantMessage) {
@@ -368,7 +368,7 @@ func TestMetricSendingAPI2(t *testing.T) {
 				Port:   tt.fields.Port,
 				Client: tt.fields.Client,
 			}
-			cl.metricSendingAPI2(tt.args.mA)
+			cl.metricStorageJsonSending(tt.args.mA)
 		})
 	}
 }
