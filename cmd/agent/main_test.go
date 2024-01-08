@@ -73,7 +73,7 @@ func TestSendJSONMetric(t *testing.T) {
 
 	type inputs struct {
 		url    string
-		metric storage.Metrics
+		metric storage.Metric
 	}
 
 	tests := []struct {
@@ -86,7 +86,7 @@ func TestSendJSONMetric(t *testing.T) {
 			name: "Positive test gauge",
 			input: inputs{
 				url: "http://127.0.0.1:8080/update/",
-				metric: storage.Metrics{
+				metric: storage.Metric{
 					ID:    "TestMetric1",
 					MType: "gauge",
 					Value: storage.PointOf(123.321),
@@ -99,7 +99,7 @@ func TestSendJSONMetric(t *testing.T) {
 			name: "Positive test counter",
 			input: inputs{
 				url: "http://127.0.0.1:8080/update/",
-				metric: storage.Metrics{
+				metric: storage.Metric{
 					ID:    "TestMetric1",
 					MType: "counter",
 					Delta: storage.PointOf(int64(123)),

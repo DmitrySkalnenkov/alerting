@@ -61,24 +61,24 @@ func TestHmacSha256(t *testing.T) {
 
 func TestSetMetric(t *testing.T) {
 	var ms = MetricsStorage{
-		Metrics{ID: "TestMetric1", MType: "gauge", Value: PointOf(123.321)},
-		Metrics{ID: "TestMetric2", MType: "counter", Delta: PointOf(int64(123))},
-		Metrics{ID: "TestMetric3", MType: "gauge", Value: PointOf(234.567)},
+		Metric{ID: "TestMetric1", MType: "gauge", Value: PointOf(123.321)},
+		Metric{ID: "TestMetric2", MType: "counter", Delta: PointOf(int64(123))},
+		Metric{ID: "TestMetric3", MType: "gauge", Value: PointOf(234.567)},
 	}
 
 	tests := []struct {
 		name  string
-		input Metrics
-		want  Metrics
+		input Metric
+		want  Metric
 	}{
 		{
 			name: "Set gauge",
-			input: Metrics{
+			input: Metric{
 				ID:    "TestMetric1",
 				MType: "gauge",
 				Value: PointOf(123.321),
 			},
-			want: Metrics{
+			want: Metric{
 				ID:    "TestMetric1",
 				MType: "gauge",
 				Value: PointOf(123.321),
@@ -87,12 +87,12 @@ func TestSetMetric(t *testing.T) {
 		},
 		{
 			name: "Set counter",
-			input: Metrics{
+			input: Metric{
 				ID:    "TestMetric2",
 				MType: "counter",
 				Delta: PointOf(int64(123)),
 			},
-			want: Metrics{
+			want: Metric{
 				ID:    "TestMetric2",
 				MType: "counter",
 				Delta: PointOf(int64(246)),
@@ -112,8 +112,8 @@ func TestSetMetric(t *testing.T) {
 
 func TestGetMetric(t *testing.T) {
 	var ms = MetricsStorage{
-		Metrics{ID: "TestMetric1", MType: "gauge", Value: PointOf(123.321)},
-		Metrics{ID: "TestMetric2", MType: "counter", Delta: PointOf(int64(123))},
+		Metric{ID: "TestMetric1", MType: "gauge", Value: PointOf(123.321)},
+		Metric{ID: "TestMetric2", MType: "counter", Delta: PointOf(int64(123))},
 	}
 	fmt.Printf("DEBUG: mStorage is %v. \n", ms)
 
@@ -125,7 +125,7 @@ func TestGetMetric(t *testing.T) {
 	tests := []struct {
 		name  string
 		input inputs
-		want  Metrics
+		want  Metric
 	}{
 		{
 			name: "Get gauge",
@@ -133,7 +133,7 @@ func TestGetMetric(t *testing.T) {
 				MetricName: "TestMetric1",
 				MetricType: "gauge",
 			},
-			want: Metrics{
+			want: Metric{
 				ID:    "TestMetric1",
 				MType: "gauge",
 				Value: PointOf(123.321),

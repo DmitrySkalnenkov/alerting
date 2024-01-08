@@ -19,7 +19,7 @@ var KeyHexStr = ""
 var ServerKeyHexStr = ""
 var AgentKeyHexStr = ""
 
-type Metrics struct {
+type Metric struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
 	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
@@ -27,13 +27,13 @@ type Metrics struct {
 	Hash  string   `json:"hash,omitempty"`  // значение хеш-функции
 }
 
-type MetricsStorage []Metrics
+type MetricsStorage []Metric
 
 var ServerMetStorage = NewMetricStorage()
 
 var deltaInit int64 = 0
 var valueInit float64 = 0
-var NilMetric = Metrics{
+var NilMetric = Metric{
 	ID:    "",
 	MType: "",
 	Delta: &deltaInit,
@@ -46,8 +46,8 @@ func NewMetricStorage() *MetricsStorage {
 	return M
 }
 
-func NewMetric() *Metrics {
-	N := new(Metrics)
+func NewMetric() *Metric {
+	N := new(Metric)
 	N.ID = ""
 	N.MType = ""
 	N.Value = new(float64)
@@ -56,8 +56,8 @@ func NewMetric() *Metrics {
 	return N
 }
 
-func MakeMetric(id string, mType string, mData string) Metrics {
-	var N Metrics
+func MakeMetric(id string, mType string, mData string) Metric {
+	var N Metric
 	var dataStr string
 	N.ID = id
 	switch mType {
@@ -128,19 +128,23 @@ func HmacSha256(dataHexStr string, keyHexStr string) string {
 	return hmac256Hex
 }
 
-// SetMetric -- Metric setter
-func (pm *MetricsStorage) SetMetric(m Metrics) {
+// SetMetric() sets metric data into MetricsStorage
+func (pm *MetricsStorage) SetMetric(m Metric) {
 	if *pm != nil {
+		valueZero := float64(0)
+		deltaZero := int64(0)
 		for i := 0; i < len(*pm); i++ {
 			if (*pm)[i].ID == m.ID && (*pm)[i].MType == m.MType {
 				switch m.MType {
 				case "gauge":
 					(*pm)[i].Value = m.Value
-					(*pm)[i].Delta = new(int64)
+					(*pm)[i].Delta = &deltaZero //new(int64)
+					(*pm)[i].Hash = m.Hash
 					return
 				case "counter":
 					*(*pm)[i].Delta = *(*pm)[i].Delta + *m.Delta
-					(*pm)[i].Value = new(float64)
+					(*pm)[i].Value = &valueZero // new(float64)
+					(*pm)[i].Hash = m.Hash
 					return
 				}
 			}
@@ -156,7 +160,7 @@ func (pm *MetricsStorage) SetMetric(m Metrics) {
 }
 
 // GetMetric -- metric getter, if no metric return nilMetric
-func (pm *MetricsStorage) GetMetric(metricID string, metricType string) Metrics {
+func (pm *MetricsStorage) GetMetric(metricID string, metricType string) Metric {
 	for i := 0; i < len(*pm); i++ {
 		if (*pm)[i].ID == metricID && (*pm)[i].MType == metricType {
 			return (*pm)[i]
@@ -167,7 +171,7 @@ func (pm *MetricsStorage) GetMetric(metricID string, metricType string) Metrics 
 }
 
 // Comparing metric if them equal then true
-func IsMetricsEqual(m1 Metrics, m2 Metrics) (res bool) {
+func IsMetricsEqual(m1 Metric, m2 Metric) (res bool) {
 	if m1.ID == m2.ID && m1.MType == m2.MType {
 		switch m1.MType {
 		case "gauge":

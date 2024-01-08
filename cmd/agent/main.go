@@ -27,27 +27,29 @@ type Client struct {
 func (cl Client) metricStoragePlainSending(mA *storage.MetricsStorage) {
 	curURL := ""
 	for row := 0; row < len(*mA); row++ {
-		switch (*mA)[row].MType {
-		case "gauge":
-			pv := (*mA)[row].Value
-			sv := strconv.FormatFloat(*pv, 'f', 0, 64)
-			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, sv)
-			fmt.Printf("INFO[A]: metricStoragePlainSending(), URL is: %s \n", curURL)
-			_, err := cl.sendPlainPostRequest(curURL)
-			if err != nil {
-				fmt.Printf("ERROR[A]: sendPostRequest() error -- %v. \n", err)
+		if (*mA)[row].ID != "" {
+			switch (*mA)[row].MType {
+			case "gauge":
+				pv := (*mA)[row].Value
+				sv := strconv.FormatFloat(*pv, 'f', 0, 64)
+				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, sv)
+				fmt.Printf("INFO[A]: metricStoragePlainSending(), URL is: %s \n", curURL)
+				_, err := cl.sendPlainPostRequest(curURL)
+				if err != nil {
+					fmt.Printf("ERROR[A]: sendPostRequest() error -- %v. \n", err)
+				}
+			case "counter":
+				pd := (*mA)[row].Delta
+				sd := strconv.FormatInt(*pd, 10)
+				curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, sd)
+				fmt.Printf("INFO[A]: metricStoragePlainSending(), URL is: %s \n", curURL)
+				_, err := cl.sendPlainPostRequest(curURL)
+				if err != nil {
+					fmt.Printf("ERROR[A]: sendPostRequest() error -- %v.\n", err)
+				}
+			default:
+				fmt.Printf("ERROR[A]: metricStoragePlainSending() wrong metric type. It must be `gauge` or `counter`.\n")
 			}
-		case "counter":
-			pd := (*mA)[row].Delta
-			sd := strconv.FormatInt(*pd, 10)
-			curURL = fmt.Sprintf("http://%s:%s/update/%s/%s/%s", cl.IP, cl.Port, (*mA)[row].MType, (*mA)[row].ID, sd)
-			fmt.Printf("INFO[A]: metricStoragePlainSending(), URL is: %s \n", curURL)
-			_, err := cl.sendPlainPostRequest(curURL)
-			if err != nil {
-				fmt.Printf("ERROR[A]: sendPostRequest() error -- %v.\n", err)
-			}
-		default:
-			fmt.Printf("ERROR[A]: metricStoragePlainSending() wrong metric type. It must be `gauge` or `counter`.\n")
 		}
 	}
 }
@@ -55,15 +57,17 @@ func (cl Client) metricStoragePlainSending(mA *storage.MetricsStorage) {
 // Sends  metrics to server by POST ("application/json") with metric type and value in JSON.
 func (cl Client) metricStorageJsonSending(mA *storage.MetricsStorage) {
 	curURL := ""
-	var curMetric storage.Metrics
+	var curMetric storage.Metric
 	for row := 0; row < len(*mA); row++ {
-		curURL = fmt.Sprintf("http://%s:%s/update/", cl.IP, cl.Port)
-		curMetric = (*mA)[row]
-		fmt.Printf("DEBUG[A]: For sending. curMetric.ID = %v, curMetric.MType = %v, curMetric.Value = %v, curMetric.Delta = %v. \n",
-			curMetric.ID, curMetric.MType, curMetric.Value, curMetric.Delta)
-		_, err := cl.sendJsonPostRequest(curURL, curMetric)
-		if err != nil {
-			fmt.Printf("ERROR[A]: %v.\n", err)
+		if (*mA)[row].ID != "" {
+			curURL = fmt.Sprintf("http://%s:%s/update/", cl.IP, cl.Port)
+			curMetric = (*mA)[row]
+			fmt.Printf("DEBUG[A]: For sending. curMetric.ID = %v, curMetric.MType = %v, curMetric.Value = %v, curMetric.Delta = %v. \n",
+				curMetric.ID, curMetric.MType, curMetric.Value, curMetric.Delta)
+			_, err := cl.sendJsonPostRequest(curURL, curMetric)
+			if err != nil {
+				fmt.Printf("ERROR[A]: %v.\n", err)
+			}
 		}
 	}
 }
@@ -87,7 +91,7 @@ func (cl Client) sendPlainPostRequest(curURL string) (string, error) {
 }
 
 // Sends request by POST method with content type "application/json" and metric data in JSON
-func (cl Client) sendJsonPostRequest(curURL string, m storage.Metrics) (string, error) {
+func (cl Client) sendJsonPostRequest(curURL string, m storage.Metric) (string, error) {
 	payloadBuf := new(bytes.Buffer)
 	err := json.NewEncoder(payloadBuf).Encode(m)
 	if err != nil {
@@ -231,8 +235,8 @@ func main() {
 		}
 		if CurTime.Sub(LastReportTime) > reportInterval {
 			fmt.Printf("INFO[A]: ReportTime: %s.\n", string(LastReportTime.String()))
-			cl.metricStoragePlainSending(&agentMetricStorage)
-			//cl.metricStorageJsonSending(&agentMetricStorage)
+			//cl.metricStoragePlainSending(&agentMetricStorage)
+			cl.metricStorageJsonSending(&agentMetricStorage)
 			LastReportTime = time.Now()
 		}
 	}

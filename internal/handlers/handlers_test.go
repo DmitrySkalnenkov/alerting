@@ -20,13 +20,13 @@ func TestUpdateHandler(t *testing.T) {
 		contentType  string
 		code         int
 		response     string
-		storedMetric storage.Metrics
+		storedMetric storage.Metric
 	}
 	tests := []struct {
 		name       string
 		curStorage storage.MetricsStorage
 		reqURL     string
-		reqMetric  storage.Metrics
+		reqMetric  storage.Metric
 		want       want
 	}{ //Test table
 		{
@@ -35,7 +35,7 @@ func TestUpdateHandler(t *testing.T) {
 				storage.NilMetric,
 			},
 			reqURL: "http://127.0.0.1:8080/update/",
-			reqMetric: storage.Metrics{
+			reqMetric: storage.Metric{
 				ID:    "TestMetric1",
 				MType: "gauge",
 				Delta: nil,
@@ -45,7 +45,7 @@ func TestUpdateHandler(t *testing.T) {
 				contentType: "application/json",
 				code:        200,
 				response:    `{"status":"ok"}`,
-				storedMetric: storage.Metrics{
+				storedMetric: storage.Metric{
 					ID:    "TestMetric1",
 					MType: "gauge",
 					Delta: nil,
@@ -59,7 +59,7 @@ func TestUpdateHandler(t *testing.T) {
 				storage.NilMetric,
 			},
 			reqURL: "http://127.0.0.1:8080/update/",
-			reqMetric: storage.Metrics{
+			reqMetric: storage.Metric{
 				ID:    "TestMetric2",
 				MType: "counter",
 				Delta: storage.PointOf(int64(321)),
@@ -69,7 +69,7 @@ func TestUpdateHandler(t *testing.T) {
 				contentType: "application/json",
 				code:        200,
 				response:    `{"status":"ok"}`,
-				storedMetric: storage.Metrics{
+				storedMetric: storage.Metric{
 					ID:    "TestMetric2",
 					MType: "counter",
 					Delta: storage.PointOf(int64(321)),
@@ -80,7 +80,7 @@ func TestUpdateHandler(t *testing.T) {
 		{
 			name: "gauge metric id already exist",
 			curStorage: storage.MetricsStorage{
-				storage.Metrics{
+				storage.Metric{
 					ID:    "TestMetric1",
 					MType: "gauge",
 					Delta: nil,
@@ -88,7 +88,7 @@ func TestUpdateHandler(t *testing.T) {
 				},
 			},
 			reqURL: "http://127.0.0.1:8080/update/",
-			reqMetric: storage.Metrics{
+			reqMetric: storage.Metric{
 				ID:    "TestMetric1",
 				MType: "gauge",
 				Delta: nil,
@@ -98,7 +98,7 @@ func TestUpdateHandler(t *testing.T) {
 				contentType: "application/json",
 				code:        200,
 				response:    `{"status":"ok"}`,
-				storedMetric: storage.Metrics{
+				storedMetric: storage.Metric{
 					ID:    "TestMetric1",
 					MType: "gauge",
 					Delta: nil,
@@ -109,7 +109,7 @@ func TestUpdateHandler(t *testing.T) {
 		{
 			name: "counter metric id already exist",
 			curStorage: storage.MetricsStorage{
-				storage.Metrics{
+				storage.Metric{
 					ID:    "TestMetric2",
 					MType: "counter",
 					Delta: storage.PointOf(int64(100)),
@@ -117,7 +117,7 @@ func TestUpdateHandler(t *testing.T) {
 				},
 			},
 			reqURL: "http://127.0.0.1:8080/update/",
-			reqMetric: storage.Metrics{
+			reqMetric: storage.Metric{
 				ID:    "TestMetric2",
 				MType: "counter",
 				Delta: storage.PointOf(int64(321)),
@@ -127,7 +127,7 @@ func TestUpdateHandler(t *testing.T) {
 				contentType: "application/json",
 				code:        200,
 				response:    `{"status":"ok"}`,
-				storedMetric: storage.Metrics{
+				storedMetric: storage.Metric{
 					ID:    "TestMetric2",
 					MType: "counter",
 					Delta: storage.PointOf(int64(421)),
@@ -230,7 +230,7 @@ func TestGaugeHandlerAPI1(t *testing.T) {
 			storage.MetStorage = storage.NewMetricStorage()
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(GaugeHandlerAPI1)
+			h := http.HandlerFunc(GaugeHandlerPlain)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
@@ -319,7 +319,7 @@ func TestCounterHandlerAPI1(t *testing.T) {
 			storage.MetStorage = storage.NewMetricStorage()
 			req := httptest.NewRequest(http.MethodPost, tt.request, nil)
 			w := httptest.NewRecorder()
-			h := http.HandlerFunc(CounterHandlerAPI1)
+			h := http.HandlerFunc(CounterHandlerPlain)
 			h.ServeHTTP(w, req)
 			res := w.Result()
 			_, err := io.ReadAll(res.Body)
@@ -344,13 +344,13 @@ func TestGetGaugeHandlerAPI1(t *testing.T) {
 	}
 	tests := []struct {
 		name       string
-		testMetric storage.Metrics
+		testMetric storage.Metric
 		getRequest string
 		want       want
 	}{ //Test table
 		{
 			name:       "positive test #1",
-			testMetric: storage.Metrics{ID: "TestMetric1", MType: "gauge", Value: storage.PointOf(123.0)},
+			testMetric: storage.Metric{ID: "TestMetric1", MType: "gauge", Value: storage.PointOf(123.0)},
 			getRequest: "http://127.0.0.1:8080/value/gauge/TestMetric1",
 			want: want{
 				contentType: "text/plain",
@@ -360,7 +360,7 @@ func TestGetGaugeHandlerAPI1(t *testing.T) {
 		},
 		{
 			name:       "positive test #2",
-			testMetric: storage.Metrics{ID: "TestMetric2", MType: "gauge", Value: storage.PointOf(-321.0)},
+			testMetric: storage.Metric{ID: "TestMetric2", MType: "gauge", Value: storage.PointOf(-321.0)},
 			getRequest: "http://127.0.0.1:8080/value/gauge/TestMetric2",
 			want: want{
 				contentType: "text/plain",
@@ -370,7 +370,7 @@ func TestGetGaugeHandlerAPI1(t *testing.T) {
 		},
 		{
 			name:       "metric not found test",
-			testMetric: storage.Metrics{ID: "TestMetric2", MType: "gauge", Value: storage.PointOf(1111.0)},
+			testMetric: storage.Metric{ID: "TestMetric2", MType: "gauge", Value: storage.PointOf(1111.0)},
 			getRequest: "http://127.0.0.1:8080/value/gauge/TestMetric3",
 			want: want{
 				contentType: "text/plain",
@@ -422,13 +422,13 @@ func TestGetCounterHandlerAPI1(t *testing.T) {
 	}
 	tests := []struct {
 		name       string
-		testMetric storage.Metrics
+		testMetric storage.Metric
 		getRequest string
 		want       want
 	}{ //Test table
 		{
 			name:       "positive test #1",
-			testMetric: storage.Metrics{ID: "TestMetric1", MType: "counter", Delta: storage.PointOf(int64(123))},
+			testMetric: storage.Metric{ID: "TestMetric1", MType: "counter", Delta: storage.PointOf(int64(123))},
 			getRequest: "http://127.0.0.1:8080/value/counter/TestMetric1",
 			want: want{
 				contentType: "text/plain",
@@ -438,7 +438,7 @@ func TestGetCounterHandlerAPI1(t *testing.T) {
 		},
 		{
 			name:       "positive test #2",
-			testMetric: storage.Metrics{ID: "TestMetric2", MType: "counter", Delta: storage.PointOf(int64(-321))},
+			testMetric: storage.Metric{ID: "TestMetric2", MType: "counter", Delta: storage.PointOf(int64(-321))},
 			getRequest: "http://127.0.0.1:8080/value/counter/TestMetric2",
 			want: want{
 				contentType: "text/plain",
@@ -448,7 +448,7 @@ func TestGetCounterHandlerAPI1(t *testing.T) {
 		},
 		{
 			name:       "metric not found test",
-			testMetric: storage.Metrics{ID: "TestMetric2", MType: "counter", Delta: storage.PointOf(int64(1111))},
+			testMetric: storage.Metric{ID: "TestMetric2", MType: "counter", Delta: storage.PointOf(int64(1111))},
 			getRequest: "http://127.0.0.1:8080/value/counter/TestMetric3",
 			want: want{
 				contentType: "text/plain",
