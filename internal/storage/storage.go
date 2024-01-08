@@ -31,11 +31,13 @@ type MetricsStorage []Metrics
 
 var ServerMetStorage = NewMetricStorage()
 
+var deltaInit int64 = 0
+var valueInit float64 = 0
 var NilMetric = Metrics{
 	ID:    "",
 	MType: "",
-	Delta: nil,
-	Value: nil,
+	Delta: &deltaInit,
+	Value: &valueInit,
 	Hash:  "",
 }
 
