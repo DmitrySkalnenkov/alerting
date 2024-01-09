@@ -62,7 +62,7 @@ func (cl Client) metricStorageJsonSending(mA *storage.MetricsStorage) {
 		if (*mA)[row].ID != "" {
 			curURL = fmt.Sprintf("http://%s:%s/update/", cl.IP, cl.Port)
 			curMetric = (*mA)[row]
-			fmt.Printf("DEBUG[A]: For sending. curMetric.ID = %v, curMetric.MType = %v, curMetric.Value = %v, curMetric.Delta = %v. \n",
+			fmt.Printf("DEBUG[A]: For sending. curMetric.ID = %v, curMetric.MType = %v, curMetric.Value = %v, curMetric.Delta = %v.\n",
 				curMetric.ID, curMetric.MType, curMetric.Value, curMetric.Delta)
 			_, err := cl.sendJsonPostRequest(curURL, curMetric)
 			if err != nil {
@@ -156,26 +156,20 @@ func main() {
 	var CurTime time.Time
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
-	//  ADDRESS, через флаг: "-a=<ЗНАЧЕНИЕ>"
-	//  REPORT_INTERVAL, через флаг: "-r=<ЗНАЧЕНИЕ>"
-	//  POLL_INTERVAL, через флаг: "-p=<ЗНАЧЕНИЕ>"
-	//  добавьте поддержку аргумента через флаг k=<КЛЮЧ>;
+
 	var hostPortStr string
 	var reportIntervalStr string
 	var pollIntervalStr string
-	flag.StringVar(&hostPortStr, "a", "127.0.0.1:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080")
-	flag.StringVar(&reportIntervalStr, "r", "10", "Value for -r (REPORT_INTERVAL) flag 'r' should be time in second, example: 10")
-	flag.StringVar(&pollIntervalStr, "p", "2", "Value for -p (POLL_INTERVAL) flag 'p' should be time in second, example: 2")
-	//	flag.StringVar(&keyValue, "k", "", "Key value for HMAC-SHA-256 calculation of hash. Should be hexstring, example: 300")
+	flag.StringVar(&hostPortStr, "a", "127.0.0.1:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080") //(i7)  ADDRESS, через флаг: "-a=<ЗНАЧЕНИЕ>"
+	flag.StringVar(&reportIntervalStr, "r", "10", "Value for -r (REPORT_INTERVAL) flag 'r' should be time in second, example: 10")       //(i7)  REPORT_INTERVAL, через флаг: "-r=<ЗНАЧЕНИЕ>"
+	flag.StringVar(&pollIntervalStr, "p", "2", "Value for -p (POLL_INTERVAL) flag 'p' should be time in second, example: 2")             //(i7)  POLL_INTERVAL, через флаг: "-p=<ЗНАЧЕНИЕ>"
+	//	flag.StringVar(&keyValue, "k", "", "Key value for HMAC-SHA-256 calculation of hash. Should be hexstring, example: 'dce8b88a0e5943ab3431c6e41293e1e33790162f09020704342b064a92d651d5'")	//(i9)  добавьте поддержку аргумента через флаг k=<КЛЮЧ>;
 	flag.Parse()
-	//  ADDRESS (по умолчанию: "127.0.0.1:8080" или "localhost:8080")
-	//  REPORT_INTERVAL (по умолчанию: 10 секунд)
-	//  POLL_INTERVAL (по умолчанию: 2 секунды)
-	//  добавьте поддержку аргумента через переменную окружения KEY=<КЛЮЧ>;
-	envHostPortStr, isEnvHostPort := os.LookupEnv("ADDRESS")
-	envReportIntervalStr, isEnvReportInterval := os.LookupEnv("STORE_INTERVAL")
-	envPollIntervalStr, isEnvPollInterval := os.LookupEnv("STORE_INTERVAL")
-	//	envKeyValue, isKeyValue := os.LookupEnv("KEY")
+
+	envHostPortStr, isEnvHostPort := os.LookupEnv("ADDRESS")                     //(i5) ADDRESS (по умолчанию: "127.0.0.1:8080" или "localhost:8080")
+	envReportIntervalStr, isEnvReportInterval := os.LookupEnv("REPORT_INTERVAL") //(i5) REPORT_INTERVAL (по умолчанию: 10 секунд)
+	envPollIntervalStr, isEnvPollInterval := os.LookupEnv("POLL_INTERVAL")       //(i5) POLL_INTERVAL (по умолчанию: 2 секунды)
+	//envKeyValue, isKeyValue := os.LookupEnv("KEY")                             //(i9) добавьте поддержку аргумента через переменную окружения KEY=<КЛЮЧ>;
 	if isEnvHostPort && envHostPortStr != "" {
 		hostPortStr = envHostPortStr
 	}
