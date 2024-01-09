@@ -84,6 +84,7 @@ func ValueHandlerJson(w http.ResponseWriter, r *http.Request) {
 				case "counter":
 					curMetric.Delta = m.Delta
 				}
+				curMetric.Hash = m.Hash
 				w.Header().Set("Content-Type", "application/json")
 				txJSON, err := json.Marshal(curMetric)
 				if err != nil {

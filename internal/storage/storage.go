@@ -15,7 +15,6 @@ import (
 )
 
 // var KeyHexStr = "0102030405060708090a0b0c0d0e0f10111213141516171819"
-var KeyHexStr = ""
 var ServerKeyHexStr = ""
 var AgentKeyHexStr = ""
 
@@ -89,7 +88,7 @@ func MakeMetric(id string, mType string, mData string) Metric {
 	}
 }
 
-// StringToHexStr() converts ACCII symbol string to HEX string
+// StringToHexStr() converts ACSII symbol string to HEX string
 func StringToHexStr(dataStr string) string {
 	return hex.EncodeToString([]byte(dataStr))
 }
@@ -108,24 +107,14 @@ func SetEncKey(keyVal string) string {
 }
 
 // HmacSha256() -- function HMAC-SHA256
-func HmacSha256(dataHexStr string, keyHexStr string) string {
+func HmacSha256(dataStr string, keyStr string) string {
 	var keyBin, dataBin []byte
-	var err error
-	keyBin, err = hex.DecodeString(keyHexStr)
-	if err != nil {
-		fmt.Printf("ERROR[S]: Cannot convert key {%s} into hex string.\n", keyHexStr)
-		return ""
-	}
-	dataBin, err = hex.DecodeString(dataHexStr)
-	if err != nil {
-		fmt.Printf("ERROR[S]: Cannot convert data {%s} into hex string.\n", dataHexStr)
-		return ""
-	}
+	keyBin = []byte(keyStr)
+	dataBin = []byte(dataStr)
 	hmac256 := hmac.New(sha256.New, keyBin)
 	hmac256.Write(dataBin)
-	dataHmac256 := hmac256.Sum(nil)
-	hmac256Hex := hex.EncodeToString(dataHmac256)
-	return hmac256Hex
+	hmac256.Sum(nil)
+	return fmt.Sprintf("%x", hmac256.Sum(nil))
 }
 
 // SetMetric() sets metric data into MetricsStorage
@@ -133,19 +122,36 @@ func (pm *MetricsStorage) SetMetric(m Metric) {
 	if *pm != nil {
 		valueZero := float64(0)
 		deltaZero := int64(0)
+		curServerMetricHash := ""
+		curServerMetricData := ""
 		for i := 0; i < len(*pm); i++ {
 			if (*pm)[i].ID == m.ID && (*pm)[i].MType == m.MType {
 				switch m.MType {
 				case "gauge":
-					(*pm)[i].Value = m.Value
-					(*pm)[i].Delta = &deltaZero //new(int64)
-					(*pm)[i].Hash = m.Hash
-					return
+					curServerMetricData = fmt.Sprintf("%s:gauge:%f", (*pm)[i].ID, *(*pm)[i].Value)
+					curServerMetricHash = HmacSha256(curServerMetricData, ServerKeyHexStr)
+					if curServerMetricHash == (*pm)[i].Hash {
+						(*pm)[i].Value = m.Value
+						(*pm)[i].Delta = &deltaZero //new(int64)
+						(*pm)[i].Hash = m.Hash
+						return
+					} else {
+						fmt.Printf("WARN: Server hash (%s) and agent hash (%s) don't match for metric data (%s).\n", curServerMetricHash, (*pm)[i].Hash, curServerMetricData)
+						return
+					}
+
 				case "counter":
-					*(*pm)[i].Delta = *(*pm)[i].Delta + *m.Delta
-					(*pm)[i].Value = &valueZero // new(float64)
-					(*pm)[i].Hash = m.Hash
-					return
+					curServerMetricData = fmt.Sprintf("%s:counter:%d", (*pm)[i].ID, *(*pm)[i].Value)
+					curServerMetricHash = HmacSha256(curServerMetricData, ServerKeyHexStr)
+					if curServerMetricHash == (*pm)[i].Hash {
+						*(*pm)[i].Delta = *(*pm)[i].Delta + *m.Delta
+						(*pm)[i].Value = &valueZero // new(float64)
+						(*pm)[i].Hash = m.Hash
+						return
+					} else {
+						fmt.Printf("WARN: Server hash (%s) and agent hash (%s) don't match for metric data (%s).\n", curServerMetricHash, (*pm)[i].Hash, curServerMetricData)
+						return
+					}
 				}
 			}
 		}

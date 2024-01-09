@@ -157,19 +157,21 @@ func main() {
 	LastPoolTime := time.Now()
 	LastReportTime := time.Now()
 
-	var hostPortStr string
-	var reportIntervalStr string
-	var pollIntervalStr string
-	flag.StringVar(&hostPortStr, "a", "127.0.0.1:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080") //(i7)  ADDRESS, через флаг: "-a=<ЗНАЧЕНИЕ>"
-	flag.StringVar(&reportIntervalStr, "r", "10", "Value for -r (REPORT_INTERVAL) flag 'r' should be time in second, example: 10")       //(i7)  REPORT_INTERVAL, через флаг: "-r=<ЗНАЧЕНИЕ>"
-	flag.StringVar(&pollIntervalStr, "p", "2", "Value for -p (POLL_INTERVAL) flag 'p' should be time in second, example: 2")             //(i7)  POLL_INTERVAL, через флаг: "-p=<ЗНАЧЕНИЕ>"
-	//	flag.StringVar(&keyValue, "k", "", "Key value for HMAC-SHA-256 calculation of hash. Should be hexstring, example: 'dce8b88a0e5943ab3431c6e41293e1e33790162f09020704342b064a92d651d5'")	//(i9)  добавьте поддержку аргумента через флаг k=<КЛЮЧ>;
+	var hostPortStr string = ""
+	var reportIntervalStr string = ""
+	var pollIntervalStr string = ""
+	var keyValueStr string = ""
+	flag.StringVar(&hostPortStr, "a", "127.0.0.1:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080")                                                      //(i7)  ADDRESS, через флаг: "-a=<ЗНАЧЕНИЕ>"
+	flag.StringVar(&reportIntervalStr, "r", "10", "Value for -r (REPORT_INTERVAL) flag 'r' should be time in second, example: 10")                                                            //(i7)  REPORT_INTERVAL, через флаг: "-r=<ЗНАЧЕНИЕ>"
+	flag.StringVar(&pollIntervalStr, "p", "2", "Value for -p (POLL_INTERVAL) flag 'p' should be time in second, example: 2")                                                                  //(i7)  POLL_INTERVAL, через флаг: "-p=<ЗНАЧЕНИЕ>"
+	flag.StringVar(&keyValueStr, "k", "", "Key value for HMAC-SHA-256 calculation of hash. Should be hexstring, example: 'dce8b88a0e5943ab3431c6e41293e1e33790162f09020704342b064a92d651d5'") //(i9)  добавьте поддержку аргумента через флаг k=<КЛЮЧ>;
 	flag.Parse()
 
 	envHostPortStr, isEnvHostPort := os.LookupEnv("ADDRESS")                     //(i5) ADDRESS (по умолчанию: "127.0.0.1:8080" или "localhost:8080")
 	envReportIntervalStr, isEnvReportInterval := os.LookupEnv("REPORT_INTERVAL") //(i5) REPORT_INTERVAL (по умолчанию: 10 секунд)
 	envPollIntervalStr, isEnvPollInterval := os.LookupEnv("POLL_INTERVAL")       //(i5) POLL_INTERVAL (по умолчанию: 2 секунды)
-	//envKeyValue, isKeyValue := os.LookupEnv("KEY")                             //(i9) добавьте поддержку аргумента через переменную окружения KEY=<КЛЮЧ>;
+	envKeyValueStr, isKeyValue := os.LookupEnv("KEY")                            //(i9) добавьте поддержку аргумента через переменную окружения KEY=<КЛЮЧ>;
+
 	if isEnvHostPort && envHostPortStr != "" {
 		hostPortStr = envHostPortStr
 	}
@@ -179,12 +181,17 @@ func main() {
 	if isEnvPollInterval && envPollIntervalStr != "" {
 		reportIntervalStr = envReportIntervalStr
 	}
-	//hostportStr := auxiliary.GetParamValue("ADDRESS", "a", "localhost:8080", "Flag 'a' value should be in 'IP:PORT' format")
 	hostPortStr = auxiliary.TrimQuotes(hostPortStr)
 	serverIPAddress, serverTCPPort, err := net.SplitHostPort(hostPortStr)
 	if err != nil {
-		fmt.Printf("ERROR[A]: Cannot get IP and PORT value from ADDRESS string (%s). \n", hostPortStr)
+		fmt.Printf("WARN[A]: Cannot get IP and PORT value from ADDRESS string (%s). Will be used default values (127.0.0.1:8080).\n", hostPortStr)
+		serverIPAddress = "127.0.0.1"
+		serverTCPPort = "8080"
 	}
+	if isKeyValue && envKeyValueStr != "" {
+		keyValueStr = envKeyValueStr
+	}
+
 	var pollInterval time.Duration
 	pollValue, err := strconv.Atoi(pollIntervalStr)
 	if err == nil {
@@ -195,19 +202,16 @@ func main() {
 	if err == nil {
 		reportInterval = time.Duration(reportValue) * time.Second
 	}
-
 	fmt.Printf("DEBUG[A]: PollInterval is %s.\n", pollInterval)
 	fmt.Printf("DEBUG[A]: ReportInterval is %s.\n", reportInterval)
-
 	baseURL := fmt.Sprintf("http://%s:%s", serverIPAddress, serverTCPPort)
 	fmt.Printf("DEBUG[A]: BaseURL is %s.\n", baseURL)
 
-	var PollCount int64
-	PollCount = 0
-	var rtm runtime.MemStats
 	METRIC_AMOUNT := 29
+	var PollCount int64 = 0
+	var rtm runtime.MemStats
 	var agentMetricStorage storage.MetricsStorage
-	agentMetricStorage = make(storage.MetricsStorage, METRIC_AMOUNT)
+	agentMetricStorage = make(storage.MetricsStorage, METRIC_AMOUNT) //agentMetricStorage init
 	for i := 0; i < METRIC_AMOUNT; i++ {
 		agentMetricStorage = append(agentMetricStorage, storage.NilMetric)
 	}

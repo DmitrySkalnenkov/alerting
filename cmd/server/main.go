@@ -16,17 +16,17 @@ import (
 )
 
 func main() {
-	var hostPortStr string
-	var isRestoreBool bool
-	var storeIntervalStr string
-	var storeFilePathStr string
-	var serverKeyValue string
+	var hostPortStr string = ""
+	var isRestoreBool bool = false
+	var storeIntervalStr string = ""
+	var storeFilePathStr string = ""
+	var serverKeyValueStr string = ""
 	flag.StringVar(&hostPortStr, "a", "127.0.0.1:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080") //(i7) ADDRESS, через флаг "-a=<ЗНАЧЕНИЕ>"
 	flag.BoolVar(&isRestoreBool, "r", true, "Value for -r (RESTORE)  should be 'true' of 'false'")                                       //(i7) RESTORE, через флаг "-r=<ЗНАЧЕНИЕ>"
 	flag.StringVar(&storeIntervalStr, "i", "300s", "Value for -i (STORE_INTERVAL) flag 'r' should be time in second, example: 300")      //(i7) STORE_INTERVAL, через флаг "-i=<ЗНАЧЕНИЕ>"
 	flag.StringVar(&storeFilePathStr, "f", "/tmp/devops-metrics-db.json", "Store file path should be "+                                  //(i7) STORE_FILE, через флаг "-f=<ЗНАЧЕНИЕ>"
 		"absolute path to file. If STORE_FILE variable is empty string than storing functionality will not be used.")
-	flag.StringVar(&serverKeyValue, "k", "", "Server key value for HMAC-SHA-256 calculation. Should be hexstring. Example: 300") //(i9) добавьте поддержку аргумента через флаг k=<КЛЮЧ>;
+	flag.StringVar(&serverKeyValueStr, "k", "", "Server key value for HMAC-SHA-256 calculation. Should be hexstring. Example: 'dce8b88a0e5943ab3431c6e41293e1e33790162f09020704342b064a92d651d5'") //(i9) добавьте поддержку аргумента через флаг k=<КЛЮЧ>;
 	flag.Parse()
 
 	envHostPortStr, isEnvHostPort := os.LookupEnv("ADDRESS")                  //(i5) ADDRESS (по умолчанию: "127.0.0.1:8080" или "localhost:8080")
@@ -55,9 +55,10 @@ func main() {
 		storeFilePathStr = envStoreFilePath
 	}
 	if isServerKeyValue && envServerKeyValue != "" { //(i7) --
-		serverKeyValue = envServerKeyValue
+		serverKeyValueStr = envServerKeyValue
 	}
 
+	storage.ServerKeyHexStr = serverKeyValueStr
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Compress(5))
