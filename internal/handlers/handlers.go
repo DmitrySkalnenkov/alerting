@@ -38,7 +38,7 @@ func NotImplementedHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // handler for URL /update/ (POST with content-type "application/json)
-func UpdateHandler(w http.ResponseWriter, r *http.Request) {
+func UpdateHandlerJson(w http.ResponseWriter, r *http.Request) {
 	urlSliced := strings.Split(r.URL.Path, "/")
 	if r.Header.Get("Content-Type") == "application/json" && r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
@@ -56,22 +56,22 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 			NotImplementedHandler(w, r)
 		}
 	} else if urlSliced[2] == "gauge" && r.Method == http.MethodPost {
-		GaugeHandlerPlain(w, r)
+		UpdateGaugeHandlerPlain(w, r)
 	} else if urlSliced[2] == "counter" && r.Method == http.MethodPost {
-		CounterHandlerPlain(w, r)
+		UpdateCounterHandlerPlain(w, r)
 	} else {
 		NotImplementedHandler(w, r)
 	}
 }
 
 // handeler for URL /value/ (GET or POST)
-func ValueHandler(w http.ResponseWriter, r *http.Request) {
+func ValueHandlerJson(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") == "application/json" {
 		decoder := json.NewDecoder(r.Body)
 		var curMetric storage.Metric
 		err := decoder.Decode(&curMetric)
 		if err != nil {
-			log.Println(err)
+			log.Printf("ERROR: Failed to decode current Metric, %s /n", err)
 			return
 		}
 		if (curMetric.MType == "gauge" || curMetric.MType == "counter") && curMetric.ID != "" {
@@ -114,7 +114,7 @@ func ValueHandler(w http.ResponseWriter, r *http.Request) {
 // /update/gauge/<MetricName>/<MetricValue> then status -- OK (200) and save MetricValue into map with key MetricName
 // /update/gauge/ then status -- NotFound (404)
 // /update/gauge then status -- BadRequest (400)
-func GaugeHandlerPlain(w http.ResponseWriter, r *http.Request) {
+func UpdateGaugeHandlerPlain(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	fmt.Printf("DEBUG[S]: Gauge handler. URL is %s.\n", string(urlPath))
 	matched, err := regexp.MatchString(`/update/gauge/[A-Za-z0-9]+/[0-9.-]+$`, urlPath)
@@ -153,7 +153,7 @@ func GaugeHandlerPlain(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler for updating counter value. GET request
-func CounterHandlerPlain(w http.ResponseWriter, r *http.Request) {
+func UpdateCounterHandlerPlain(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	fmt.Printf("DEBUG[S]: Counter handler. URL is %s.\n", string(urlPath))
 	matched, err := regexp.MatchString(`/update/counter/[A-Za-z0-9]+/[0-9-]+$`, urlPath)
@@ -191,7 +191,7 @@ func CounterHandlerPlain(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler for getting gauge value
-func GetGaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
+func ValueGaugeHandlerGet(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	//fmt.Printf("DEBUG[S]: URL is : %s.\n", urlPath)
 	matched, err := regexp.MatchString(`/value/gauge/[A-Za-z0-9]+`, urlPath)
@@ -215,7 +215,7 @@ func GetGaugeHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 }
 
 // Handler for getting counter value
-func GetCounterHandlerAPI1(w http.ResponseWriter, r *http.Request) {
+func ValueCounterHandlerGet(w http.ResponseWriter, r *http.Request) {
 	urlPath := r.URL.Path
 	//fmt.Printf("DEBUG[S]: URL is : %s.\n", urlPath)
 	matched, err := regexp.MatchString(`/value/counter/[A-Za-z0-9]+`, urlPath)
@@ -240,7 +240,7 @@ func GetAllMetricsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		//GetAllMetricsHandlerAPI1(w, r)
-		GetAllMetricsHandlerAPI15(w, r)
+		AllMetricsHandlerGet(w, r)
 	case "POST":
 		GetAllMetricsHandlerAPI2(w, r)
 	}
@@ -261,7 +261,7 @@ func GetAllMetricsHandlerAPI1(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, fmt.Sprintf("%v - %v\n", mName, mValue))
 	}
 }
-func GetAllMetricsHandlerAPI15(w http.ResponseWriter, r *http.Request) {
+func AllMetricsHandlerGet(w http.ResponseWriter, r *http.Request) {
 	//w.Header().Set("Content-Encoding", "gzip")
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r.Body)

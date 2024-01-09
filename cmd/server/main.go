@@ -29,9 +29,7 @@ func main() {
 	flag.StringVar(&hostPortStr, "a", "127.0.0.1:8080", "Value for -a (ADDRESS) should be in 'ip:port' format, example: 127.0.0.1:8080")
 	flag.BoolVar(&isRestoreBool, "r", true, "Value for -r (RESTORE)  should be 'true' of 'false'")
 	flag.StringVar(&storeIntervalStr, "i", "300s", "Value for -i (STORE_INTERVAL) flag 'r' should be time in second, example: 300")
-	//flag.StringVar(&storeFilePathStr, "f", "/tmp/devops-metrics-db.json", "Store file path should be "+
-	//	"absolute path to file. If STORE_FILE variable is empty string than storing functionality will not be used.")
-	flag.StringVar(&storeFilePathStr, "f", "", "Store file path should be "+
+	flag.StringVar(&storeFilePathStr, "f", "/tmp/devops-metrics-db.json", "Store file path should be "+
 		"absolute path to file. If STORE_FILE variable is empty string than storing functionality will not be used.")
 	flag.StringVar(&serverKeyValue, "k", "", "Server key value for HMAC-SHA-256 calculation. Should be hexstring. Example: 300")
 	flag.Parse()
@@ -73,23 +71,15 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Compress(5))
-	//r.HandleFunc("/", handlers.GetAllMetricsHandler)
-	r.Get("/", handlers.GetAllMetricsHandlerAPI15)
-	r.Post("/", handlers.GetAllMetricsHandlerAPI2)
-	r.Post("/update/", handlers.UpdateHandler)
-	r.Post("/value/", handlers.ValueHandler)
-	//r.Get("/update/gauge/*", handlers.GaugeHandlerAPI1)
-	//r.Get("/update/counter/*", handlers.CounterHandlerAPI1)
-	r.Post("/update/gauge/*", handlers.GaugeHandlerPlain)
-	r.Post("/update/counter/*", handlers.CounterHandlerPlain)
-	r.Post("/update/*", handlers.NotImplementedHandler)
-	r.Post("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI1)
-	r.Post("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
-	r.Get("/value/gauge/{MetricName}", handlers.GetGaugeHandlerAPI1)
-	r.Get("/value/counter/{MetricName}", handlers.GetCounterHandlerAPI1)
-
-	//hostPort = auxiliary.TrimQuotes(hostPort)
-	//storeIntervalStr += "s"
+	r.Get("/", handlers.AllMetricsHandlerGet)                             //(i3) По запросу GET http://<АДРЕС_СЕРВЕРА>/ сервер должен отдавать html-страничку, со списком имен и значений всех известных ему на текущий момент метрик
+	r.Post("/update/", handlers.UpdateHandlerJson)                        //(i4) Для передачи метрик на сервер использовать Content-Type: "application/json", в теле запроса описанный выше JSON, передача через: POST update/
+	r.Post("/value/", handlers.ValueHandlerJson)                          //(i4) Для получения метрик с сервера использовать Content-Type: "application/json", в теле запроса описанный выше JSON (заполняем только ID и MType), в ответ получаем такой же JSON, но уже с запоsлненными значениями метрик. Запрос через: POST value/
+	r.Post("/update/gauge/*", handlers.UpdateGaugeHandlerPlain)           //(i2) Метрики принимаются сервером по протоколу http, методом POST: в формате: "http://<АДРЕС_СЕРВЕРА>/update/<ТИП_МЕТРИКИ>/<ИМЯ_МЕТРИКИ>/<ЗНАЧЕНИЕ_МЕТРИКИ>" application-type: "text/plain"
+	r.Post("/update/counter/*", handlers.UpdateCounterHandlerPlain)       //(i2) --
+	r.Post("/update/*", handlers.NotImplementedHandler)                   //(i3) При попытке запроса неизвестной серверу метрики, сервер должен возвращать http.StatusNotFound
+	r.Post("/value/*", handlers.NotImplementedHandler)                    //(i3) --
+	r.Get("/value/gauge/{MetricName}", handlers.ValueGaugeHandlerGet)     //(i3)Сервер должен возвращать текущее значение запрашиваемой метрики в текстовом виде по запросу GET http://<АДРЕС_СЕРВЕРА>/value/<ТИП_МЕТРИКИ>/<ИМЯ_МЕТРИКИ> со статусом http.StatusOK
+	r.Get("/value/counter/{MetricName}", handlers.ValueCounterHandlerGet) //(i3) --
 
 	storeIntervalTime := 0 * time.Second
 	if storeIntervalStr != "0" {
@@ -114,7 +104,7 @@ func main() {
 	if isRestoreBool {
 		storage.RestoreMetricsFromFile(storeFilePathStr, storage.ServerMetStorage)
 	}
-	//_ = storeIntervalTime
+
 	if storeFilePathStr != "" {
 		go storage.UpdateMetricsInChannel(c)
 		go storage.WriteMetricsToFile(storeFilePathStr, c, storeIntervalTime)
