@@ -16,7 +16,7 @@ func TestPushGauge(t *testing.T) {
 		name  string
 		input inputs
 		want  float64
-	}{ //Test table
+	}{
 		{
 			name: "Positve test",
 			input: inputs{
